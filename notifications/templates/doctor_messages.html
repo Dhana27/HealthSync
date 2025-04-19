@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Messages</h2>
+
+    {% if conversations %}
+        <ul class="list-group">
+            {% for conversation in conversations %}
+                {% with patient=conversation.sender %}
+                    <li class="list-group-item">
+                        <a href="{% url 'chat_detail' patient.id %}">Chat with {{ patient.username }}</a>
+                    </li>
+                {% endwith %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No messages available.</p>
+    {% endif %}
+</div>
+{% endblock %}

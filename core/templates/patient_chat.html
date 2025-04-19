@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="chat-widget">
+        <div class="chat-header">
+            <h3>Medical Assistant</h3>
+        </div>
+        
+        <div class="chat-messages" id="conversationList">
+            {% for msg in messages_list %}
+                <div class="message {% if msg.role == 'doctor' %}doctor-message{% elif msg.role == 'bot' %}bot-message{% else %}patient-message{% endif %}">
+                    <div class="message-sender">
+                        {% if msg.role == "doctor" %}
+                            Dr. {{ msg.sender }}
+                        {% elif msg.role == "bot" %}
+                            Healthsync Virtual Assistant
+                        {% else %}
+                            You
+                        {% endif %}
+                    </div>
+                    <div class="message-content">{{ msg.content }}</div>
+                    <div class="message-time">{{ msg.timestamp|date:"M d, Y H:i" }}</div>
+                </div>
+            {% empty %}
+                <div class="no-messages">No messages yet. Start a conversation!</div>
+            {% endfor %}
+        </div>
+
+        <div class="chat-input">
+            <form method="POST" id="chatForm">
+                {% csrf_token %}
+                <div class="input-group">
+                    {{ form.message }}
+                    <div class="button-group">
+                        <button type="submit" name="send" value="send" class="btn btn-primary">
+                            <i class="fas fa-robot"></i> Ask AI
+                        </button>
+                        <button type="submit" name="escalate" value="1" class="btn btn-danger">
+                            <i class="fas fa-user-md"></i> Ask Doctor
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.chat-widget {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.chat-header {
+    background: #2c3e50;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+}
+
+.chat-messages {
+    height: 400px;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    max-width: 80%;
+}
+
+.doctor-message {
+    background: #ffe5e5;
+    margin-left: auto;
+}
+
+.bot-message {
+    background: #e3f2fd;
+    margin-right: auto;
+}
+
+.patient-message {
+    background: #e8f5e9;
+    margin-right: auto;
+}
+
+.message-sender {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.message-content {
+    margin-bottom: 5px;
+}
+
+.message-time {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.chat-input {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.no-messages {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<script>
+let lastMessageCount = 0;
+let lastDoctorBotMessageCount = 0;
+
+function refreshConversation() {
+    $.ajax({
+        url: "{% url 'refresh_chat' %}",
+        method: "GET",
+        success: function(data) {
+            let conversationHtml = "";
+            let doctorBotMessageCount = 0;
+            
+            data.messages.forEach(function(msg) {
+                let messageClass = msg.role === "doctor" ? "doctor-message" : 
+                                 msg.role === "bot" ? "bot-message" : "patient-message";
+                
+                // Count messages from doctor or bot
+                if (msg.role === "doctor" || msg.role === "bot") {
+                    doctorBotMessageCount++;
+                }
+                
+                conversationHtml += `
+                    <div class="message ${messageClass}">
+                        <div class="message-sender">${msg.sender}</div>
+                        <div class="message-content">${msg.content}</div>
+                        <div class="message-time">${msg.timestamp}</div>
+                    </div>`;
+            });
+            
+            // Only update the conversation if there are new messages from doctor or bot
+            if (doctorBotMessageCount > lastDoctorBotMessageCount) {
+                $("#conversationList").html(conversationHtml || '<div class="no-messages">No messages yet. Start a conversation!</div>');
+                $("#conversationList").scrollTop($("#conversationList")[0].scrollHeight);
+                lastDoctorBotMessageCount = doctorBotMessageCount;
+            }
+            
+            // Update total message count
+            lastMessageCount = data.messages.length;
+        }
+    });
+}
+
+$(document).ready(function(){
+    // Initial scroll to bottom
+    $("#conversationList").scrollTop($("#conversationList")[0].scrollHeight);
+    
+    // Set up periodic refresh
+    setInterval(refreshConversation, 5000);
+});
+</script>
+{% endblock %}

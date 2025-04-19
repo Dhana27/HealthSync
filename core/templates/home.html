@@ -1,0 +1,13 @@
+<!-- core/templates/home.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h1 class="display-4">Welcome to Healthsync</h1>
+    <p class="lead">Your virtual assistant for healthcare support.</p>
+    <p>Healthsync is here to help you manage your health with personalized advice and easy communication with healthcare professionals.</p>
+    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Get Started</a>
+    <p class="mt-2"><small>New patient? Register inside the next page.</small></p>
+
+</div>
+{% endblock %}

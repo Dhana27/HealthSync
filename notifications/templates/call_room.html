@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Video Consultation</h2>
+
+<iframe 
+  src="{{ join_url }}" 
+  allow="camera; microphone; fullscreen; display-capture" 
+  style="width: 100%; height: 100vh;" 
+  frameborder="0">
+</iframe>
+
+{% if role == "doctor" %}
+  <button onclick="manualEndAsDoctor()" class="btn btn-danger mt-3">End Session</button>
+
+  <script>
+    function manualEndAsDoctor() {
+        window.location.href = "/notifications/prescription/create/{{ consult_id }}/"
+    }
+  </script>
+{% endif %}
+
+{% if role == "patient" %}
+  <button onclick="manualEndAsPatient()" class="btn btn-danger mt-3">Leave Call</button>
+
+  <script>
+    function manualEndAsPatient() {
+      window.location.href = "/notifications/available-doctors/";
+    }
+  </script>
+{% endif %}
+{% endblock %}

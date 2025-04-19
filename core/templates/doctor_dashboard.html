@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Patient's Health Dashboard</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Heart Rate</th>
+                <th>SpO2</th>
+                <th>Temp</th>
+                <th>Status</th>
+                <th>View Charts</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in patients %}
+            <tr>
+                <td>{{ p.name }}</td>
+                <td>{{ p.heart_rate }}</td>
+                <td>{{ p.spo2 }}</td>
+                <td>{{ p.temp }}</td>
+                <td>
+                    {% if p.alert %}
+                        <span class="badge bg-danger">ALERT</span>
+                    {% else %}
+                        <span class="badge bg-success">Normal</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'patient_dashboard' %}?patient_id={{ p.id }}" class="btn btn-sm btn-info">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

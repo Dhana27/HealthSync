@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Manage Patient Health</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Medical Consultation</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" id="consultationForm">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="consultation">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Diagnosis</label>
+                        <textarea name="diagnosis" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Symptoms</label>
+                        <textarea name="symptoms" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+            
+                <div class="medication-section">
+                    <h5 class="mb-3">Prescribed Medications</h5>
+                    <div id="medication-forms">
+                        <div class="medication-form row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Medication Name</label>
+                                <input type="text" name="medication_name[]" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Dosage</label>
+                                <input type="text" name="dosage[]" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Time</label>
+                                <input type="time" name="time[]" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Days</label>
+                                <input type="number" name="duration_days[]" class="form-control" min="1" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Food Timing</label>
+                                <select name="food_timing[]" class="form-control" required>
+                                    <option value="before">Before Food</option>
+                                    <option value="after">After Food</option>
+                                    <option value="with">With Food</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-danger remove-medication" style="display: none;">×</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-secondary" onclick="addMedicationForm()">+ Add Another Medicine</button>
+                        <button type="submit" class="btn btn-primary">Save Consultation</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Set Appointment</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="appointment">
+                <div class="col-md-4">
+                    <label class="form-label">Doctor</label>
+                    {{ app_form.doctor }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Date</label>
+                    {{ app_form.appointment_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Time</label>
+                    {{ app_form.appointment_time }}
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">Set Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Add Diet Tips</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="diet_tip">
+                <div class="mb-3">
+                    {{ diet_form.advice }}
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">Add Tip</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Medical History</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Diagnosis</th>
+                            <th>Symptoms</th>
+                            <th>Medications</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for history in medical_history %}
+                            <tr>
+                                <td>{{ history.date }}</td>
+                                <td>{{ history.time }}</td>
+                                <td>{{ history.diagnosis }}</td>
+                                <td>{{ history.symptoms }}</td>
+                                <td>
+                                    <ul class="list-unstyled mb-0">
+                                    {% for med in history.medications.all %}
+                                        <li>{{ med.medication_name }} ({{ med.dosage }}) - {{ med.food_timing }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No medical history available.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addMedicationForm() {
+    const formContainer = document.querySelector('#medication-forms');
+    const lastForm = formContainer.querySelector('.medication-form:last-child');
+    const newForm = lastForm.cloneNode(true);
+    
+    // Clear the values in the new form
+    newForm.querySelectorAll('input, select').forEach(input => {
+        input.value = '';
+    });
+    
+    // Show remove button for all forms except the first one
+    const removeBtn = newForm.querySelector('.remove-medication');
+    removeBtn.style.display = 'block';
+    
+    formContainer.appendChild(newForm);
+    
+    // Show remove buttons for all forms except the first one
+    document.querySelectorAll('.medication-form').forEach((form, index) => {
+        const btn = form.querySelector('.remove-medication');
+        if (index === 0) {
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = 'block';
+        }
+    });
+}
+
+// Add event delegation for remove buttons
+document.querySelector('#medication-forms').addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-medication')) {
+        e.target.closest('.medication-form').remove();
+    }
+});
+</script>
+{% endblock %}

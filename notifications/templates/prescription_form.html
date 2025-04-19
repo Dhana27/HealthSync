@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <label>Diagnosis:</label><br>
+  <textarea name="diagnosis" required></textarea><br>
+
+  <label>Advice:</label><br>
+  <textarea name="advice" required></textarea><br><br>
+
+  <table id="medication-table">
+    <thead>
+      <tr>
+        <th>Medicine Name</th>
+        <th>Food Timing</th>
+        <th>Times per Day</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input name="med_name[]" required></td>
+        <td>
+          <select name="food_timing[]">
+            <option value="Before Food">Before Food</option>
+            <option value="After Food">After Food</option>
+          </select>
+        </td>
+        <td><input type="number" name="times_per_day[]" min="1" required></td>
+        <td><button type="button" onclick="addRow()">➕</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <br>
+  <button type="submit">Save Prescription</button>
+</form>
+
+<script>
+  function updateRowButtons() {
+    const rows = document.querySelectorAll("#medication-table tbody tr");
+    rows.forEach((row, index) => {
+      const btn = row.querySelector("button");
+      if (index === rows.length - 1) {
+        btn.textContent = "➕";
+        btn.setAttribute("onclick", "addRow()");
+      } else {
+        btn.textContent = "➖";
+        btn.setAttribute("onclick", "removeRow(this)");
+      }
+    });
+  }
+
+  function addRow() {
+    const table = document.querySelector("#medication-table tbody");
+    const newRow = table.rows[0].cloneNode(true);
+    newRow.querySelectorAll("input, select").forEach(el => el.value = "");
+    table.appendChild(newRow);
+    updateRowButtons();
+  }
+
+  function removeRow(button) {
+    const row = button.closest("tr");
+    row.remove();
+    updateRowButtons();
+  }
+
+  // Initial button setup
+  updateRowButtons();
+</script>
+{% endblock %}

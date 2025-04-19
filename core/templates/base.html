@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HealthSync</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" type="text/css" href="{% static 'core/core_style.css' %}">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body { padding-top: 70px; }
+    .active { font-weight: bold; color: #007bff !important; }
+    #side-panel {
+      height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-panel-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .navbar-nav .nav-link {
+      padding: 8px 16px;
+      transition: all 0.3s ease;
+    }
+
+    .navbar-nav .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'home' %}">HealthSync</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          {% if user.is_authenticated %}
+            {% if role == "doctor" %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'edit_doctor_profile' %}">Profile</a></li>
+            {% elif role == "patient" %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'edit_patient_profile' %}">👤 Profile</a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="container-fluid">
+    <div class="row">
+      {% if user.is_authenticated and role %}
+        <div class="col-md-3 bg-light p-3" id="side-panel">
+          <h4>HealthSync</h4>
+          <div class="side-panel-content">
+            <ul class="list-group">
+              {% if role == "doctor" %}
+                <li class="list-group-item"><a href="{% url 'patients_list' %}">Patients</a></li>
+                <li class="list-group-item"><a href="{% url 'messages' %}">Messages</a></li> 
+                <li class="list-group-item"><a href="{% url 'doctor_dashboard' %}">Doctor Dashboard</a></li> 
+                <li class="list-group-item"><a href="{% url 'doctor_consultation_room' %}">Virtual Consultation</a></li>
+              {% elif role == "patient" %}
+                <li class="list-group-item"><a href="{% url 'view_reminders' %}">🏥 Health Hub</a></li>
+                <li class="list-group-item"><a href="{% url 'patient_dashboard' %}">📊 My Health Data</a></li>
+                <li class="list-group-item"><a href="{% url 'available_doctors' %}">Virtual Consultation</a></li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+      
+      <div class="col-md-9">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="container mt-3">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-info" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  </div>
+  
+  {% if role == 'patient' %}
+    <div style="display:none" id="debugInfo">
+      Role: {{ role }}
+      User: {{ user.username }}
+    </div>
+    
+    <div id="chatWidgetContainer">
+      {% include 'chat_widget.html' %}
+    </div>
+    
+    <script>
+      console.log('Chat widget should be loaded for patient');
+      console.log('Debug info:', document.getElementById('debugInfo').textContent);
+      
+      if (window.jQuery) {
+        console.log('jQuery is loaded');
+      } else {
+        console.log('jQuery is NOT loaded');
+      }
+    </script>
+  {% endif %}
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

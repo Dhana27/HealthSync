@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>No Active Consultation</h2>
+<p>You are not currently in any consultation queue.</p>
+<a class="btn btn-outline-primary" href="{% url 'available_doctors' %}">View Available Doctors</a>
+{% endblock %}

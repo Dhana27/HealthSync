@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>📊 My Health Data</h2>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    {% if role == "patient" %}
+    <div class="col-auto">
+      <form method="post" action="{% url 'simulate_all_vitals' %}" class="d-inline">
+          {% csrf_token %}
+          <button class="btn btn-warning">🧪 Simulate Full Vitals</button>
+      </form>
+    </div>
+    <div class="col-auto">
+      {% if request.user.patient.fitbit_connected %}
+        <div class="d-inline-flex align-items-center">
+          <span class="badge bg-success me-2">✅ Fitbit Connected</span>
+          <form method="post" action="{% url 'fitbit_logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">Disconnect Fitbit</button>
+          </form>
+        </div>
+      {% else %}
+        <a href="{% url 'fitbit_login' %}" class="btn btn-primary">🔗 Connect Fitbit</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if request.user.fitbitvitals_set.last %}
+    <div class="alert alert-info">
+        📊 Last HR Reading: {{ request.user.fitbitvitals_set.last.resting_heart_rate }} bpm
+        {% if request.user.fitbitvitals_set.last.alert_triggered %}
+            <strong class="text-danger">🚨 ALERT Triggered!</strong>
+        {% endif %}
+    </div>
+  {% endif %}
+
+  {% if hr_data and labels %}
+    <canvas id="hrChart" height="100"></canvas>
+    <canvas id="spo2Chart" height="100"></canvas>
+    <canvas id="sleepChart" height="100"></canvas>
+    <canvas id="tempChart" height="100"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      function renderChart(canvasId, label, data, labels, color) {
+          new Chart(document.getElementById(canvasId), {
+              type: 'line',
+              data: {
+                  labels: labels,
+                  datasets: [{
+                      label: label,
+                      data: data,
+                      fill: false,
+                      borderColor: color,
+                      tension: 0.1
+                  }]
+              }
+          });
+      }
+
+      renderChart('hrChart', 'Heart Rate (bpm)', {{ hr_data|safe }}, {{ labels|safe }}, 'red');
+      renderChart('spo2Chart', 'SpO2 (%)', {{ spo2_data|safe }}, {{ labels|safe }}, 'blue');
+      renderChart('sleepChart', 'Sleep Duration (min)', {{ sleep_data|safe }}, {{ labels|safe }}, 'green');
+      renderChart('tempChart', 'Body Temperature (°F)', {{ temp_data|safe }}, {{ labels|safe }}, 'orange');
+    </script>
+  {% else %}
+    <div class="alert alert-warning">⚠️ No vitals yet — {% if role == "patient" %}try simulating some data{% else %}no data available{% endif %}.</div>
+  {% endif %}
+
+</div>
+<h4 class="mt-5">🧾 Recent Vitals History</h4>
+<table class="table table-striped mt-2">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>HR (bpm)</th>
+            <th>SpO2 (%)</th>
+            <th>Temp (°F)</th>
+            <th>Alert</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in recent_vitals %}
+        <tr>
+            <td>{{ v.date }}</td>
+            <td>{{ v.resting_heart_rate }}</td>
+            <td>{{ v.spo2 }}</td>
+            <td>{{ v.body_temp }}</td>
+            <td>
+                {% if v.alert_triggered %}
+                    <span class="badge bg-danger">🚨 ALERT</span>
+                {% else %}
+                    <span class="badge bg-success">OK</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No recent vitals available.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+<table border="1">
+    <tr>
+        <th>Username</th>
+        <th>Current Role</th>
+        <th>Change Role</th>
+    </tr>
+    {% for profile in user_profiles %}
+    <tr>
+        <td>{{ profile.user.username }}</td>
+        <td>{{ profile.role }}</td>
+        <td>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ profile.user.id }}">
+                <select name="new_role">
+                    <option value="patient">Patient</option>
+                    <option value="doctor">Doctor</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button type="submit">Update</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

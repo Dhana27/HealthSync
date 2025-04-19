@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+  <h3>Doctor Profile</h3>
+  <p><strong>Current Availability:</strong>
+    {% if request.user.doctor.is_available_for_call %}
+      🟢 Available
+    {% else %}
+      🔴 Not Available
+    {% endif %}
+  </p>
+  <form method="post">
+    {% csrf_token %}
+
+    <h5>Basic Info</h5>
+    {{ user_form.as_p }}
+
+    <h5 class="mt-4">Doctor Details</h5>
+    {{ doctor_form.as_p }}
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

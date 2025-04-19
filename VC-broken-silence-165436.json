@@ -1,0 +1,618 @@
+{
+    "template_id": "67fcc0004b6eb78daeeddd4f",
+    "name": "VC-broken-silence-165436",
+    "default": "",
+    "region": "in",
+    "id": "67fcc0004b6eb78daeeddd4f",
+    "customerId": "67fcbf2c4944f067313a96b0",
+    "appId": "67fcbf2c4944f067313a96b1",
+    "roles": {
+        "doctor": {
+            "name": "doctor",
+            "role_id": "d77987eb-55ba-407f-b5b6-5822630e78d8",
+            "publishParams": {
+                "allowed": [
+                    "audio",
+                    "video",
+                    "screen"
+                ],
+                "audio": {
+                    "bitRate": 32,
+                    "codec": "opus"
+                },
+                "video": {
+                    "bitRate": 850,
+                    "codec": "vp8",
+                    "frameRate": 15,
+                    "width": 1280,
+                    "height": 720
+                },
+                "screen": {
+                    "codec": "vp8",
+                    "frameRate": 10,
+                    "width": 1920,
+                    "height": 1080
+                },
+                "simulcast": {
+                    "video": {
+                        "layers": [
+                            {
+                                "rid": "f",
+                                "scaleResolutionDownBy": 1,
+                                "maxBitrate": 850,
+                                "maxFramerate": 15
+                            },
+                            {
+                                "rid": "h",
+                                "scaleResolutionDownBy": 2,
+                                "maxBitrate": 300,
+                                "maxFramerate": 15
+                            },
+                            {
+                                "rid": "q",
+                                "scaleResolutionDownBy": 4,
+                                "maxBitrate": 120,
+                                "maxFramerate": 15
+                            }
+                        ]
+                    },
+                    "screen": {}
+                },
+                "videoSimulcastLayers": {},
+                "screenSimulcastLayers": {}
+            },
+            "subscribeParams": {
+                "subscribeToRoles": [
+                    "patient",
+                    "doctor"
+                ],
+                "maxSubsBitRate": 3200,
+                "subscribeDegradation": {
+                    "packetLossThreshold": 25,
+                    "degradeGracePeriodSeconds": 1,
+                    "recoverGracePeriodSeconds": 4
+                }
+            },
+            "permissions": {
+                "hlsStreaming": false,
+                "rtmpStreaming": false,
+                "browserRecording": true,
+                "sendRoomState": true,
+                "endRoom": true,
+                "removeOthers": true,
+                "mute": true,
+                "unmute": true,
+                "changeRole": true,
+                "pollWrite": true,
+                "pollRead": true
+            },
+            "priority": 1,
+            "maxPeerCount": 0
+        },
+        "patient": {
+            "name": "patient",
+            "role_id": "c5a82575-89a7-4517-9632-fd9bffd4d6b5",
+            "publishParams": {
+                "allowed": [
+                    "audio",
+                    "video"
+                ],
+                "audio": {
+                    "bitRate": 32,
+                    "codec": "opus"
+                },
+                "video": {
+                    "bitRate": 850,
+                    "codec": "vp8",
+                    "frameRate": 15,
+                    "width": 1280,
+                    "height": 720
+                },
+                "screen": {
+                    "codec": "vp8",
+                    "frameRate": 10,
+                    "width": 1920,
+                    "height": 1080
+                },
+                "simulcast": {
+                    "video": {
+                        "layers": [
+                            {
+                                "rid": "f",
+                                "scaleResolutionDownBy": 1,
+                                "maxBitrate": 850,
+                                "maxFramerate": 15
+                            },
+                            {
+                                "rid": "h",
+                                "scaleResolutionDownBy": 2,
+                                "maxBitrate": 300,
+                                "maxFramerate": 15
+                            },
+                            {
+                                "rid": "q",
+                                "scaleResolutionDownBy": 4,
+                                "maxBitrate": 120,
+                                "maxFramerate": 15
+                            }
+                        ]
+                    },
+                    "screen": {}
+                },
+                "videoSimulcastLayers": {},
+                "screenSimulcastLayers": {}
+            },
+            "subscribeParams": {
+                "subscribeToRoles": [
+                    "patient",
+                    "doctor"
+                ],
+                "maxSubsBitRate": 3200,
+                "subscribeDegradation": {
+                    "packetLossThreshold": 25,
+                    "degradeGracePeriodSeconds": 1,
+                    "recoverGracePeriodSeconds": 4
+                }
+            },
+            "permissions": {
+                "hlsStreaming": false,
+                "rtmpStreaming": false,
+                "browserRecording": false,
+                "sendRoomState": true,
+                "pollWrite": true,
+                "pollRead": true
+            },
+            "priority": 1,
+            "maxPeerCount": 0
+        }
+    },
+    "settings": {
+        "region": "in",
+        "subscribeDegradation": {},
+        "recording": null,
+        "roomState": {
+            "messageInterval": 5,
+            "sendPeerList": true,
+            "stopRoomStateOnJoin": true,
+            "enabled": true
+        },
+        "retry": {}
+    },
+    "destinations": {},
+    "plugins": {
+        "whiteboard": {
+            "permissions": {}
+        },
+        "noiseCancellation": {}
+    },
+    "createdAt": "2025-04-14T07:57:52.202Z",
+    "updatedAt": "2025-04-14T08:39:05.184Z",
+    "_id": "67fcc0004b6eb78daeeddd4f",
+    "customer": "67fcbf2c4944f067313a96b0",
+    "subdomain": "dhanalakshmi-videoconf-1555.app.100ms.live",
+    "cmsId": 1,
+    "ts_template_id": 1,
+    "room_id": "67fcc00036d4cfc1981f1d9d",
+    "room_enabled": true,
+    "role_layouts": {
+        "doctor": {
+            "id": "67fcc00046752fdcc3c98fff",
+            "role_id": "d77987eb-55ba-407f-b5b6-5822630e78d8",
+            "template_id": "67fcc0004b6eb78daeeddd4f",
+            "app_id": "67fcbf2c4944f067313a96b1",
+            "themes": [
+                {
+                    "name": "default",
+                    "default": true,
+                    "palette": {
+                        "primary_default": "#2572ED",
+                        "primary_bright": "#538DFF",
+                        "primary_dim": "#002D6D",
+                        "primary_disabled": "#004299",
+                        "on_primary_high": "#FFFFFF",
+                        "on_primary_medium": "#CCDAFF",
+                        "on_primary_low": "#84AAFF",
+                        "secondary_default": "#444954",
+                        "secondary_bright": "#70778B",
+                        "secondary_dim": "#293042",
+                        "secondary_disabled": "#404759",
+                        "on_secondary_high": "#FFFFFF",
+                        "on_secondary_medium": "#D3D9F0",
+                        "on_secondary_low": "#A4ABC0",
+                        "background_default": "#0B0E15",
+                        "background_dim": "#000000",
+                        "surface_default": "#191B23",
+                        "surface_bright": "#272A31",
+                        "surface_brighter": "#2E3038",
+                        "surface_dim": "#11131A",
+                        "on_surface_high": "#EFF0FA",
+                        "on_surface_medium": "#C5C6D0",
+                        "on_surface_low": "#8F9099",
+                        "border_default": "#1D1F27",
+                        "border_bright": "#272A31",
+                        "alert_success": "#36B37E",
+                        "alert_warning": "#FFAB00",
+                        "alert_error_default": "#C74E5B",
+                        "alert_error_bright": "#FFB2B6",
+                        "alert_error_brighter": "#FFEDEC",
+                        "alert_error_dim": "#270005"
+                    }
+                }
+            ],
+            "typography": {
+                "font_family": "Inter"
+            },
+            "logo": {
+                "url": "https://storage.googleapis.com/100ms-cms-prod/cms/100ms_18a29f69f2/100ms_18a29f69f2.png"
+            },
+            "screens": {
+                "preview": {
+                    "default": {
+                        "elements": {
+                            "preview_header": {
+                                "title": "Get Started",
+                                "sub_title": "Setup your audio and video before joining"
+                            },
+                            "join_form": {
+                                "join_btn_type": "JOIN_BTN_TYPE_JOIN_ONLY",
+                                "join_btn_label": "Join Now",
+                                "go_live_btn_label": "Go Live"
+                            },
+                            "virtual_background": {
+                                "background_media": [
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-1.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-2.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-3.png",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-4.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-5.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-6.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-7.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-8.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-9.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-10.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-11.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-12.jpg",
+                                        "media_type": "IMAGE"
+                                    }
+                                ]
+                            },
+                            "noise_cancellation": {
+                                "enabled_by_default": true
+                            }
+                        }
+                    }
+                },
+                "conferencing": {
+                    "default": {
+                        "elements": {
+                            "chat": {
+                                "initial_state": "CHAT_STATE_CLOSE",
+                                "allow_pinning_messages": true,
+                                "public_chat_enabled": true,
+                                "roles_whitelist": [
+                                    "doctor",
+                                    "patient"
+                                ],
+                                "private_chat_enabled": true,
+                                "chat_title": "Chat",
+                                "message_placeholder": "Say something...",
+                                "real_time_controls": {
+                                    "can_disable_chat": true,
+                                    "can_block_user": true,
+                                    "can_hide_message": true
+                                }
+                            },
+                            "participant_list": {},
+                            "video_tile_layout": {
+                                "grid": {
+                                    "enable_local_tile_inset": true,
+                                    "tiles_in_view": 9
+                                }
+                            },
+                            "emoji_reactions": {},
+                            "brb": {},
+                            "hand_raise": {},
+                            "virtual_background": {
+                                "background_media": [
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-1.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-2.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-3.png",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-4.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-5.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-6.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-7.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-8.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-9.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-10.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-11.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-12.jpg",
+                                        "media_type": "IMAGE"
+                                    }
+                                ]
+                            },
+                            "noise_cancellation": {
+                                "enabled_by_default": true
+                            }
+                        }
+                    }
+                },
+                "leave": {}
+            },
+            "role": "doctor"
+        },
+        "patient": {
+            "id": "67fcc00046752fdcc3c99000",
+            "role_id": "c5a82575-89a7-4517-9632-fd9bffd4d6b5",
+            "template_id": "67fcc0004b6eb78daeeddd4f",
+            "app_id": "67fcbf2c4944f067313a96b1",
+            "themes": [
+                {
+                    "name": "default",
+                    "default": true,
+                    "palette": {
+                        "primary_default": "#2572ED",
+                        "primary_bright": "#538DFF",
+                        "primary_dim": "#002D6D",
+                        "primary_disabled": "#004299",
+                        "on_primary_high": "#FFFFFF",
+                        "on_primary_medium": "#CCDAFF",
+                        "on_primary_low": "#84AAFF",
+                        "secondary_default": "#444954",
+                        "secondary_bright": "#70778B",
+                        "secondary_dim": "#293042",
+                        "secondary_disabled": "#404759",
+                        "on_secondary_high": "#FFFFFF",
+                        "on_secondary_medium": "#D3D9F0",
+                        "on_secondary_low": "#A4ABC0",
+                        "background_default": "#0B0E15",
+                        "background_dim": "#000000",
+                        "surface_default": "#191B23",
+                        "surface_bright": "#272A31",
+                        "surface_brighter": "#2E3038",
+                        "surface_dim": "#11131A",
+                        "on_surface_high": "#EFF0FA",
+                        "on_surface_medium": "#C5C6D0",
+                        "on_surface_low": "#8F9099",
+                        "border_default": "#1D1F27",
+                        "border_bright": "#272A31",
+                        "alert_success": "#36B37E",
+                        "alert_warning": "#FFAB00",
+                        "alert_error_default": "#C74E5B",
+                        "alert_error_bright": "#FFB2B6",
+                        "alert_error_brighter": "#FFEDEC",
+                        "alert_error_dim": "#270005"
+                    }
+                }
+            ],
+            "typography": {
+                "font_family": "Inter"
+            },
+            "logo": {
+                "url": "https://storage.googleapis.com/100ms-cms-prod/cms/100ms_18a29f69f2/100ms_18a29f69f2.png"
+            },
+            "screens": {
+                "preview": {
+                    "default": {
+                        "elements": {
+                            "preview_header": {
+                                "title": "Get Started",
+                                "sub_title": "Setup your audio and video before joining"
+                            },
+                            "join_form": {
+                                "join_btn_type": "JOIN_BTN_TYPE_JOIN_ONLY",
+                                "join_btn_label": "Join Now",
+                                "go_live_btn_label": "Go Live"
+                            },
+                            "virtual_background": {
+                                "background_media": [
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-1.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-2.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-3.png",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-4.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-5.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-6.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-7.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-8.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-9.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-10.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-11.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-12.jpg",
+                                        "media_type": "IMAGE"
+                                    }
+                                ]
+                            },
+                            "noise_cancellation": {
+                                "enabled_by_default": true
+                            }
+                        }
+                    }
+                },
+                "conferencing": {
+                    "default": {
+                        "elements": {
+                            "chat": {
+                                "initial_state": "CHAT_STATE_CLOSE",
+                                "public_chat_enabled": true,
+                                "roles_whitelist": [
+                                    "doctor"
+                                ],
+                                "private_chat_enabled": true,
+                                "chat_title": "Chat",
+                                "message_placeholder": "Say something...",
+                                "real_time_controls": {}
+                            },
+                            "participant_list": {},
+                            "video_tile_layout": {
+                                "grid": {
+                                    "enable_local_tile_inset": true,
+                                    "tiles_in_view": 9
+                                }
+                            },
+                            "emoji_reactions": {},
+                            "hand_raise": {},
+                            "virtual_background": {
+                                "background_media": [
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-1.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-2.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-3.png",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-4.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-5.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-6.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-7.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-8.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-9.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-10.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-11.jpg",
+                                        "media_type": "IMAGE"
+                                    },
+                                    {
+                                        "url": "https://img-vb.100ms.live/layouts/defaults/vb-12.jpg",
+                                        "media_type": "IMAGE"
+                                    }
+                                ]
+                            },
+                            "noise_cancellation": {
+                                "enabled_by_default": true
+                            }
+                        }
+                    }
+                },
+                "leave": {}
+            },
+            "role": "patient"
+        }
+    }
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    </style>
+</head>
+<body>
+    <h2>Virtual Prescription</h2>
+    <p><strong>Doctor:</strong> Dr. {{ prescription.doctor.get_full_name }}</p>
+    <p><strong>Patient:</strong> {{ prescription.patient.get_full_name }}</p>
+    <p><strong>Date:</strong> {{ prescription.created_at|date:"F j, Y" }}</p>
+
+    <h3>Diagnosis:</h3>
+    <p>{{ prescription.diagnosis }}</p>
+
+    <h3>Advice:</h3>
+    <p>{{ prescription.advice }}</p>
+
+    <h3>Medications:</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Medicine</th>
+                <th>Food Timing</th>
+                <th>Times per Day</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for med in prescription.medications.all %}
+            <tr>
+                <td>{{ med.name }}</td>
+                <td>{{ med.food_timing }}</td>
+                <td>{{ med.times_per_day }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

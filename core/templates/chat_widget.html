@@ -1,0 +1,1352 @@
+<!-- Chat Bubble -->
+<div id="chatBubble" class="chat-bubble" style="display: flex;">
+    <i class="fas fa-comments"></i>
+</div>
+
+<!-- Chat Widget -->
+<div id="chatWidget" class="chat-widget" style="display: none;">
+    <div class="chat-header">
+        <div class="header-left">
+            <span>Chat Support</span>
+        </div>
+        <button class="close-btn" onclick="toggleChat()">
+            <i class="fas fa-minus"></i>
+        </button>
+    </div>
+
+    <!-- Feedback Form -->
+    <div id="feedbackForm" class="feedback-form" style="display: none;">
+        <div class="feedback-header">
+            <h4>How are you feeling today?</h4>
+            <button class="back-to-chat" onclick="toggleFeedbackForm()">
+                <i class="fas fa-arrow-left"></i> Back to Chat
+            </button>
+        </div>
+        <div class="feedback-content">
+            <form method="post" action="{% url 'submit_feedback' %}" id="feedbackFormElement">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="pain_level">Pain Level (0-10)</label>
+                    <div class="pain-scale-container">
+                        <input type="range" class="form-range" id="pain_level" name="pain_level" min="0" max="10" step="1" required value="0">
+                        <div class="pain-scale-labels">
+                            <span class="pain-label">No Pain</span>
+                            <span class="pain-value" id="pain_value">0</span>
+                            <span class="pain-label">Severe Pain</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="feedback">Describe your symptoms:</label>
+                    <textarea class="form-control" id="feedback" name="feedback" rows="4" required 
+                        placeholder="Example: I've been experiencing chest pain and shortness of breath, especially when climbing stairs."></textarea>
+                </div>
+                <button type="submit" class="submit-health-btn">Submit Health Update</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <!-- Track Symptoms Banner -->
+        <div class="track-symptoms-banner" id="trackSymptomsButton">
+            <button class="track-symptoms-btn" onclick="toggleFeedbackForm()">
+                <div class="track-symptoms-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="track-symptoms-text">
+                    <span class="track-title">Track Your Symptoms</span>
+                    <span class="track-subtitle">Help us monitor your health</span>
+                </div>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <div class="loading-message">Loading messages...</div>
+        </div>
+
+        <div class="chat-input">
+            <form id="chat-form" method="post" action="{% url 'patient_chat' %}">
+                {% csrf_token %}
+                <textarea id="chat-message" name="message" placeholder="Type your message..." required></textarea>
+                <div class="chat-actions">
+                    <button type="submit" id="chat-submit" class="action-btn primary-btn">
+                        <i class="fas fa-robot"></i> Ask AI
+                    </button>
+                    <button type="button" id="ask-doctor-btn" class="action-btn secondary-btn" onclick="submitChatForm(true)">
+                        <i class="fas fa-user-md"></i> Ask Doctor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* First, reset any existing message styles */
+.message, .patient-message, .bot-message, .doctor-message, .system-message, .error-message {
+    all: initial;
+    font-family: inherit;
+}
+
+/* Base message styles */
+.message {
+    display: block;
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    max-width: 80%;
+    word-wrap: break-word;
+    background-color: #e9ecef !important;
+    color: #333 !important;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Message positioning */
+.patient-message {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    background-color: #e9ecef !important;
+    color: #333 !important;
+}
+
+.bot-message, .doctor-message {
+    margin-right: auto !important;
+    margin-left: 0 !important;
+    background-color: #e9ecef !important;
+    color: #333 !important;
+}
+
+/* Special message types */
+.system-message {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    text-align: center !important;
+    max-width: 100% !important;
+    margin: 10px 0 !important;
+}
+
+.error-message {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    text-align: center !important;
+    max-width: 100% !important;
+}
+
+/* Message components */
+.message-sender {
+    font-weight: bold !important;
+    margin-bottom: 5px !important;
+    font-size: 0.9em !important;
+    color: #495057 !important;
+}
+
+.message-content {
+    margin-bottom: 5px !important;
+    line-height: 1.4 !important;
+}
+
+.message-time {
+    font-size: 0.8em !important;
+    color: #6c757d !important;
+}
+
+.chat-bubble {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #3498db;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+    z-index: 999;
+}
+
+.chat-bubble:hover {
+    transform: scale(1.1);
+}
+
+.chat-bubble i {
+    color: white;
+    font-size: 24px;
+}
+
+.chat-widget-overlay {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 450px;
+    height: 600px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+    display: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.chat-widget-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-header {
+    background: #007bff;
+    color: white;
+    padding: 15px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-left .btn-info {
+    padding: 4px 8px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-left .btn-info:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: 10px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#chatContent {
+    flex: 1;
+    overflow: auto;
+    background: #f8f9fa;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+/* Override styles for the loaded content */
+#chatContent .container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    height: 100%;
+}
+
+#chatContent .chat-widget {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#chatContent .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+#chatContent form textarea {
+    min-height: 60px !important;
+    font-size: 15px !important;
+    padding: 10px !important;
+}
+
+/* Animation for widget */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+.chat-widget-overlay.show {
+    display: block;
+    animation: slideIn 0.3s ease forwards;
+}
+
+.chat-widget-overlay.hide {
+    animation: slideOut 0.3s ease forwards;
+}
+
+/* Notification dot */
+.chat-bubble::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    display: none;
+}
+
+.chat-bubble.has-notification::after {
+    display: block;
+}
+
+/* Chat content styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background: #f8f9fa;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.input-group textarea {
+    resize: none;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 15px;
+    width: 100%;
+    min-height: 80px;
+    height: 80px;
+    background-color: #fff;
+    color: #333;
+    line-height: 1.4;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 100%;
+}
+
+.input-group textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.no-messages {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+
+.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px;
+}
+
+.chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 380px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 60px);
+}
+
+.chat-messages {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 15px;
+    background: #f8f9fa;
+    height: calc(100% - 180px);
+    min-height: 200px;
+}
+
+.chat-input {
+    flex: 0 0 auto;
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #dee2e6;
+    margin-top: auto;
+}
+
+#chat-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#chat-message {
+    width: 100%;
+    height: 60px;
+    min-height: 60px;
+    max-height: 60px;
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: none;
+    background: #f8f9fa;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    padding: 5px 0;
+    width: 100%;
+    background: white;
+    height: 50px;
+}
+
+.action-btn {
+    flex: 1;
+    height: 40px;
+    padding: 0 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.primary-btn {
+    background: #007bff;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.secondary-btn {
+    background: #28a745;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+/* Make sure chat form is visible when feedback form is hidden */
+#chat-form {
+    display: flex;
+}
+
+#feedbackForm:not([style*="display: none"]) ~ .chat-input {
+    display: none;
+}
+
+/* Health Check Banner */
+.health-check-banner {
+    padding: 10px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.health-check-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.health-check-btn:hover {
+    background: #bbdefb;
+    transform: translateY(-1px);
+}
+
+.health-check-btn i {
+    font-size: 24px;
+    color: #1976d2;
+    margin-right: 15px;
+}
+
+.health-check-content {
+    text-align: left;
+}
+
+.health-check-title {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.health-check-subtitle {
+    display: block;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Consultation Options Styling */
+.consultation-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.consult-now-btn, .consult-later-btn {
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.consult-now-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.consult-now-btn:hover {
+    background-color: #c82333;
+}
+
+.consult-later-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.consult-later-btn:hover {
+    background-color: #5a6268;
+}
+
+.consultation-message {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6;
+    padding: 15px !important;
+}
+
+/* Update bot message style to handle newlines */
+.bot-message .message-content {
+    white-space: pre-line;
+}
+
+/* Track Symptoms Banner */
+.track-symptoms-banner {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.track-symptoms-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.track-symptoms-btn:hover {
+    background: #bbdefb;
+    transform: translateY(-1px);
+}
+
+.track-symptoms-icon {
+    font-size: 24px;
+    color: #1976d2;
+    margin-right: 15px;
+}
+
+.track-symptoms-text {
+    text-align: left;
+    flex: 1;
+}
+
+.track-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.track-subtitle {
+    display: block;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Feedback Form */
+.feedback-form {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.feedback-header {
+    background: #007bff;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 15px 15px 0 0;
+}
+
+.feedback-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.back-to-chat {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.back-to-chat:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.feedback-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    height: calc(100% - 60px);
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 12px;
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.pain-scale-container {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.form-range {
+    width: 100%;
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 10px 0;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+
+.form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    margin-top: -7px;
+}
+
+.form-range::-moz-range-track {
+    width: 100%;
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+
+.form-range::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.pain-scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding: 0 10px;
+}
+
+.pain-label {
+    color: #666;
+    font-size: 14px;
+}
+
+.pain-value {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 16px;
+}
+
+textarea.form-control {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: vertical;
+    background: #f8f9fa;
+    transition: all 0.2s;
+}
+
+textarea.form-control:focus {
+    outline: none;
+    border-color: #007bff;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
+.submit-health-btn {
+    width: 100%;
+    padding: 15px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 10px;
+}
+
+.submit-health-btn:hover {
+    background: #0056b3;
+}
+
+.submit-health-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+// CSRF token setup for AJAX requests
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Set up AJAX headers
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        }
+    }
+});
+
+let lastMessageCount = 0;
+let isWidgetOpen = false;
+let lastSystemMessage = null;
+let lastAnalysisMessage = null;
+let isProcessingFeedback = false;
+let lastMessages = [];
+
+function scrollToBottom() {
+    const messagesDiv = document.getElementById('chat-messages');
+    if (messagesDiv) {
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+}
+
+function removeSystemMessage() {
+    if (lastSystemMessage) {
+        lastSystemMessage.remove();
+        lastSystemMessage = null;
+    }
+}
+
+function displayMessage(message, type, sender, timestamp) {
+    const messagesDiv = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
+    
+    // Check if the message is a feedback message (safely)
+    const isFeedbackMessage = message && typeof message === 'string' && message.includes('Thank you for your feedback');
+    
+    // Only remove system message if it's not a feedback message
+    if ((type === 'bot' || type === 'doctor' || type === 'patient') && !isFeedbackMessage) {
+        removeSystemMessage();
+    }
+    
+    const senderLabel = document.createElement('div');
+    senderLabel.classList.add('message-sender');
+    
+    switch(type) {
+        case 'patient':
+            messageDiv.classList.add('patient-message');
+            senderLabel.textContent = 'You';
+            break;
+        case 'bot':
+            messageDiv.classList.add('bot-message');
+            senderLabel.textContent = 'Healthsync Virtual Assistant';
+            break;
+        case 'doctor':
+            messageDiv.classList.add('doctor-message');
+            if (sender && sender.startsWith('Dr.')) {
+                senderLabel.textContent = sender;
+            } else {
+                senderLabel.textContent = sender ? 'Dr. ' + sender : 'Doctor';
+            }
+            break;
+        case 'system':
+            messageDiv.classList.add('system-message');
+            senderLabel.textContent = 'System';
+            if (isFeedbackMessage) {
+                lastSystemMessage = messageDiv;
+            } else {
+                removeSystemMessage();
+                lastSystemMessage = messageDiv;
+            }
+            break;
+        case 'error':
+            messageDiv.classList.add('error-message');
+            senderLabel.textContent = 'Error';
+            break;
+    }
+    
+    // Create message content
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('message-content');
+    contentDiv.style.whiteSpace = 'pre-line';  // Preserve line breaks
+    
+    // Safely handle the message content
+    if (message && typeof message === 'string') {
+        // Remove URGENT: or ESCALATION: prefix if present
+        if (message.startsWith('URGENT:')) {
+            contentDiv.textContent = message.slice(7).trim();
+        } else if (message.startsWith('ESCALATION:')) {
+            contentDiv.textContent = message.slice(11).trim();
+        } else {
+            contentDiv.textContent = message;
+        }
+    } else {
+        contentDiv.textContent = 'Message content unavailable';
+    }
+    
+    // Create timestamp
+    const timeDiv = document.createElement('div');
+    timeDiv.classList.add('message-time');
+    timeDiv.textContent = timestamp || new Date().toLocaleTimeString();
+    
+    // Append all elements
+    messageDiv.appendChild(senderLabel);
+    messageDiv.appendChild(contentDiv);
+    messageDiv.appendChild(timeDiv);
+    
+    messagesDiv.appendChild(messageDiv);
+    scrollToBottom();
+    
+    return messageDiv;  // Return the message div for reference
+}
+
+function refreshMessages(shouldScroll = false) {
+    // Don't refresh if we're processing feedback
+    if (isProcessingFeedback) {
+        return;
+    }
+
+    $.ajax({
+        url: '{% url "patient_chat" %}',
+        method: 'GET',
+        success: function(response) {
+            if (!response.messages || !Array.isArray(response.messages)) {
+                console.error('Invalid message format received');
+                return;
+            }
+
+            const messagesDiv = document.getElementById('chat-messages');
+            const consultationMessage = document.querySelector('.consultation-message');
+            const analysisMessage = lastAnalysisMessage;
+
+            // Only update if we have new messages or the content has changed
+            if (response.messages.length !== lastMessageCount || hasNewMessages(response.messages)) {
+                messagesDiv.innerHTML = '';
+                lastSystemMessage = null;
+                
+                // Display server messages
+                response.messages.forEach(msg => {
+                    displayMessage(
+                        msg.content,
+                        msg.role,
+                        msg.sender,
+                        msg.timestamp
+                    );
+                });
+
+                // Restore the analysis message if it exists
+                if (analysisMessage) {
+                    messagesDiv.appendChild(analysisMessage);
+                }
+
+                // Restore consultation options if they existed
+                if (consultationMessage) {
+                    messagesDiv.appendChild(consultationMessage);
+                }
+                
+                lastMessageCount = response.messages.length;
+                
+                if (shouldScroll) {
+                    scrollToBottom();
+                }
+
+                // Store current messages for comparison
+                lastMessages = response.messages;
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading messages:', error);
+        }
+    });
+}
+
+// Add function to check for new messages
+function hasNewMessages(newMessages) {
+    if (lastMessages.length !== newMessages.length) return true;
+    
+    return newMessages.some((msg, index) => {
+        const lastMsg = lastMessages[index];
+        return !lastMsg || 
+               lastMsg.content !== msg.content ||
+               lastMsg.role !== msg.role ||
+               lastMsg.sender !== msg.sender;
+    });
+}
+
+// Set up periodic refresh for messages
+function startMessageRefresh() {
+    // Initial load
+    refreshMessages(true);
+    
+    // Set up periodic refresh every 3 seconds
+    setInterval(() => {
+        if (isWidgetOpen) {
+            refreshMessages(true);
+        }
+    }, 3000);
+}
+
+function submitChatForm(escalate = false) {
+    const messageInput = document.getElementById('chat-message');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    $.ajax({
+        url: '{% url "patient_chat" %}',
+        method: 'POST',
+        data: {
+            'message': message,
+            'escalate': escalate ? '1' : '0',
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            messageInput.value = '';
+            
+            // Display the patient's message
+            displayMessage(message, 'patient', 'You');
+            
+            if (escalate) {
+                displayMessage('Your message has been sent to the doctor. Please wait for their response.', 'system');
+            } else if (response.bot_response) {
+                displayMessage(response.bot_response, 'bot', 'Healthsync Virtual Assistant');
+            }
+        },
+        error: function(xhr) {
+            if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.error) {
+                displayMessage(xhr.responseJSON.error, 'error');
+            } else {
+                displayMessage('Error sending message. Please try again.', 'error');
+            }
+        }
+    });
+}
+
+function toggleChat() {
+    const widget = document.getElementById('chatWidget');
+    isWidgetOpen = !isWidgetOpen;
+    
+    if (isWidgetOpen) {
+        widget.style.display = 'block';
+        startMessageRefresh();  // Load messages only when opening the chat
+    } else {
+        widget.style.display = 'none';
+    }
+}
+
+function toggleFeedbackForm() {
+    const feedbackForm = document.getElementById('feedbackForm');
+    const chatContainer = document.querySelector('.chat-container');
+    
+    if (feedbackForm.style.display === 'none') {
+        feedbackForm.style.display = 'flex';
+        chatContainer.style.display = 'none';
+    } else {
+        feedbackForm.style.display = 'none';
+        chatContainer.style.display = 'flex';
+    }
+}
+
+// Update pain value display
+document.getElementById('pain_level').addEventListener('input', function() {
+    document.getElementById('pain_value').textContent = this.value;
+});
+
+// Update the feedback form submission handler
+document.getElementById('feedbackFormElement').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const submitBtn = this.querySelector('.submit-health-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    
+    const formData = new FormData(this);
+    isProcessingFeedback = true;  // Set the processing flag
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.redirected) {
+            toggleFeedbackForm();
+            
+            displayMessage('Thank you for submitting your health update. Analyzing your symptoms...', 'system');
+            
+            setTimeout(() => {
+                const painLevel = parseInt(formData.get('pain_level'));
+                const symptoms = formData.get('feedback');
+                
+                let message = '';
+                let needsConsultation = false;
+                
+                // Analyze symptoms and pain level
+                if (painLevel >= 7 || 
+                    symptoms.toLowerCase().includes('chest pain') || 
+                    symptoms.toLowerCase().includes('difficulty breathing') ||
+                    symptoms.toLowerCase().includes('severe')) {
+                    message = `Based on your reported symptoms and pain level (${painLevel}/10), I strongly recommend immediate medical consultation.
+
+Your symptoms suggest a condition that requires professional medical evaluation. Here's why:
+- High pain level or concerning symptoms reported
+- Your description indicates potential serious conditions
+- Early medical intervention is important in such cases
+
+Would you like to schedule a virtual consultation now?`;
+                    needsConsultation = true;
+                } else if (painLevel >= 4 || 
+                         symptoms.toLowerCase().includes('fever') || 
+                         symptoms.toLowerCase().includes('persistent')) {
+                    message = `Based on your symptoms and pain level (${painLevel}/10), here are my recommendations:
+
+1. Your symptoms suggest a moderate condition that should be monitored
+2. While not immediately severe, medical consultation would be beneficial
+3. Monitor for any worsening of symptoms
+
+Continue to:
+- Rest and stay hydrated
+- Take over-the-counter medications as appropriate
+- Monitor your temperature and symptoms
+- Seek medical attention if symptoms worsen
+
+Would you like to speak with a doctor about your symptoms?`;
+                    needsConsultation = true;
+                } else {
+                    message = `Based on your symptoms and pain level (${painLevel}/10), your condition appears to be mild.
+
+Recommendations:
+1. Rest and ensure adequate hydration
+2. Monitor your symptoms for any changes
+3. Practice good self-care and hygiene
+4. Consider over-the-counter remedies as appropriate
+
+If symptoms persist or worsen, don't hesitate to seek medical advice.`;
+                }
+                
+                // Store the analysis message
+                const messageDiv = displayMessage(message, 'bot');
+                lastAnalysisMessage = messageDiv;
+                
+                if (needsConsultation) {
+                    showConsultationOptions();
+                }
+            }, 1500);
+            
+            return;
+        }
+        
+        return response.json().then(data => {
+            toggleFeedbackForm();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            displayMessage('Thank you for submitting your health update.', 'system');
+            
+            setTimeout(() => {
+                if (data.message) {
+                    const messageDiv = displayMessage(data.message, 'bot');
+                    lastAnalysisMessage = messageDiv;
+                    
+                    if (data.severity_level === 'severe' || data.urgency === 'high') {
+                        showConsultationOptions();
+                    }
+                }
+            }, 1500);
+        });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        displayMessage('Error submitting health update. Please try again.', 'error');
+        toggleFeedbackForm();
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Health Update';
+        this.reset();
+        // Clear the processing flag after a delay to ensure messages are stable
+        setTimeout(() => {
+            isProcessingFeedback = false;
+        }, 3000);
+    });
+});
+
+// Add this new function to create consultation options
+function showConsultationOptions() {
+    const optionsDiv = document.createElement('div');
+    optionsDiv.classList.add('message', 'bot-message', 'consultation-message');
+    optionsDiv.innerHTML = `
+        <div class="consultation-options">
+            <button onclick="handleConsultNow()" class="consult-now-btn">
+                <i class="fas fa-video"></i> Virtual Consultation Now
+            </button>
+            <button onclick="handleConsultLater()" class="consult-later-btn">
+                <i class="fas fa-clock"></i> I'll Do It Later
+            </button>
+        </div>
+    `;
+    
+    const messagesDiv = document.getElementById('chat-messages');
+    messagesDiv.appendChild(optionsDiv);
+    scrollToBottom();
+}
+
+function handleConsultNow() {
+    // Remove the consultation options buttons
+    const consultationMessage = document.querySelector('.consultation-message');
+    if (consultationMessage) {
+        consultationMessage.remove();
+    }
+    window.location.href = '{% url "available_doctors" %}';
+}
+
+function handleConsultLater() {
+    // Remove the consultation options buttons
+    const consultationMessage = document.querySelector('.consultation-message');
+    if (consultationMessage) {
+        consultationMessage.remove();
+    }
+    
+    // Show a friendly reminder message
+    const reminderMessage = `I understand you want to think about it. Please remember to consult with a doctor soon, as your symptoms suggest medical attention would be beneficial. 
+
+In the meantime:
+1. Keep monitoring your symptoms
+2. Take prescribed medications as directed
+3. Rest and stay hydrated
+4. If symptoms worsen, don't hesitate to seek immediate medical attention
+
+I'm here if you need any assistance or decide to schedule a consultation later.`;
+    
+    displayMessage(reminderMessage, 'bot');
+    scrollToBottom();
+}
+
+// Initialize when document is ready
+$(document).ready(function() {
+    // Show chat bubble immediately
+    document.getElementById('chatBubble').style.display = 'flex';
+    
+    // Add click handler to chat bubble
+    document.getElementById('chatBubble').addEventListener('click', function() {
+        toggleChat();
+        if (isWidgetOpen) {
+            startMessageRefresh();
+        }
+    });
+    
+    // Handle form submission
+    $('#chat-form').on('submit', function(e) {
+        e.preventDefault();
+        submitChatForm(false);
+    });
+
+    // Handle textarea Enter key
+    $('#chat-message').on('keypress', function(e) {
+        if (e.which === 13 && !e.shiftKey) {
+            e.preventDefault();
+            submitChatForm(false);
+        }
+    });
+
+    // Start message refresh if widget is open
+    if (isWidgetOpen) {
+        startMessageRefresh();
+    }
+});
+
+// Add event listener for page visibility changes
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        // Show chat bubble when page becomes visible
+        document.getElementById('chatBubble').style.display = 'flex';
+    }
+});
+
+// Ensure chat bubble is visible after page loads completely
+window.addEventListener('load', function() {
+    document.getElementById('chatBubble').style.display = 'flex';
+});
+</script> 

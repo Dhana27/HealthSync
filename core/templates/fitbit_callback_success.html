@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4 text-center">
+    <h2>✅ Fitbit Connected Successfully</h2>
+    <p>Your latest heart rate has been recorded.</p>
+
+    <a href="{% url 'patient_dashboard' %}" class="btn btn-primary mt-3">⬅ Back to Dashboard</a>
+</div>
+{% endblock %}

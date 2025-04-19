@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if role == "doctor" %}
+        <h2>Patients List</h2>
+        <ul class="list-group">
+            {% for patient in patients %}
+                <li class="list-group-item">
+                    <a href="{% url 'manage_patient_health' patient.id %}">{{ patient.user.username }}</a>
+                </li>
+            {% empty %}
+                <li class="list-group-item">No patients available.</li>
+            {% endfor %}
+        </ul>
+
+    {% elif role == "patient" %}
+        <h2>Your Health Updates</h2>
+
+        <!-- Upcoming Medications -->
+        <h4>Upcoming Medications</h4>
+        <ul>
+            {% for reminder in medication_reminders %}
+                <li>{{ reminder.medication_name }} - Dosage: {{ reminder.dosage }} at {{ reminder.time }}</li>
+            {% empty %}
+                <li>No medications set.</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Upcoming Appointments -->
+        <h4>Upcoming Appointments</h4>
+        <ul>
+            {% for appointment in appointments %}
+                <li>Dr. {{ appointment.doctor_name }} on {{ appointment.appointment_date }}</li>
+            {% empty %}
+                <li>No upcoming appointments.</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Recovery Tips -->
+        <h4>Recovery Tips</h4>
+        <ul>
+            {% for tip in recovery_tips %}
+                <li>{{ tip.advice }}</li>
+            {% empty %}
+                <li>No tips available.</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}

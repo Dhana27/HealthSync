@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container my-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5>Reply to Patient Message</h5>
+    </div>
+    <div class="card-body">
+      <p><strong>From:</strong> {{ original_msg.sender.username }}</p>
+      <p><strong>Original Message:</strong> {{ original_msg.content }}</p>
+      <hr>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="reply" class="form-label">Your Reply:</label>
+          <textarea id="reply" name="reply" rows="4" class="form-control" placeholder="Type your reply..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Send Reply</button>
+        <a href="{% url 'doctor_dashboard' %}" class="btn btn-secondary">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

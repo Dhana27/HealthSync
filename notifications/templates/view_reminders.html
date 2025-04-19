@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">🏥 Health Hub</h2>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">Medical History & Appointments</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Doctor</th>
+                            <th>Diagnosis</th>
+                            <th>Medications</th>
+                            <th>Diet Tips</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for history in medical_history %}
+                        <tr>
+                            <td>{{ history.date }}</td>
+                            <td>{{ history.time }}</td>
+                            <td>{{ history.doctor }}</td>
+                            <td>{{ history.diagnosis }}</td>
+                            <td>
+                                {% for med in history.medications.all %}
+                                <div>
+                                    {{ med.medication_name }} - {{ med.dosage }}<br>
+                                    <small class="text-muted">{{ med.get_food_timing_display }} for {{ med.duration_days }} days</small>
+                                </div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for tip in recovery_tips %}
+                                    {% if tip.created_at.date == history.date %}
+                                        <div>{{ tip.advice }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No medical history available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">Upcoming Medication Schedule</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Medication</th>
+                            <th>Dosage</th>
+                            <th>Time</th>
+                            <th>Food Timing</th>
+                            <th>Duration</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for med in medication_reminders %}
+                        <tr>
+                            <td>{{ med.medication_name }}</td>
+                            <td>{{ med.dosage }}</td>
+                            <td>{{ med.time }}</td>
+                            <td>{{ med.get_food_timing_display }}</td>
+                            <td>{{ med.duration_days }} days</td>
+                            <td>{{ med.end_date }}</td>
+                            <td>
+                                {% if med.reminder_status == 'taken' %}
+                                    <span class="badge bg-success">Taken</span>
+                                {% elif med.reminder_status == 'overdue' %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                {% elif med.reminder_status == 'missed' %}
+                                    <span class="badge bg-warning">Missed</span>
+                                {% elif med.reminder_status == 'sent' %}
+                                    <span class="badge bg-info">Reminder Sent</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if med.reminder_status != 'taken' %}
+                                <form method="POST" action="{% url 'mark_medication_taken' med.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        Mark as Taken
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No medication reminders available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">Upcoming Appointments</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Doctor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td>{{ appointment.appointment_date|date:"F j, Y" }}</td>
+                            <td>{{ appointment.appointment_time|time:"g:i a" }}</td>
+                            <td>{{ appointment.doctor }} ({{ appointment.doctor.specialty }})</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">No upcoming appointments.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

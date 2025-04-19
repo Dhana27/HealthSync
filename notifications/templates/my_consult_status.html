@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>📞 Virtual Consult Status</h2>
+
+{% if consult.status == "pending" %}
+  <div class="alert alert-warning">
+    You are in queue. {{ queue_position }} patients ahead of you.
+  </div>
+  <form method="post" action="{% url 'cancel_consult' consult.id %}">
+    {% csrf_token %}
+    <button class="btn btn-danger">❌ Cancel Request</button>
+  </form>
+{% elif consult.status == "accepted" %}
+  <a class="btn btn-success" href="{% url 'start_call' consult.id %}">🔗 Join Call</a>
+{% endif %}
+
+<script>
+  const intervalId = setInterval(() => {
+    fetch("{% url 'check_consult_status' %}")
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "accepted" && data.consult_id) {
+          clearInterval(intervalId);  // ✅ Stop further checks
+          window.location.href = "/notifications/start-call/" + data.consult_id + "/";
+        }
+      });
+  }, 3500);
+</script>
+{% endblock %}
