@@ -1,0 +1,116 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/custom_admin.css' %}">
+    <style>
+        .card {
+            background: white;
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .card-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        .table th {
+            background: var(--light-bg);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--border-color);
+        }
+        .table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .bg-success {
+            background-color: #10B981;
+            color: white;
+        }
+        .bg-warning {
+            background-color: #F59E0B;
+            color: white;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .alert-info {
+            background-color: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="card">
+        <div class="card-header">
+            <h3>Appointments</h3>
+        </div>
+        <div class="card-body">
+            {% if appointments %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Doctor Name</th>
+                            <th>Patient Name</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td>Dr. {{ appointment.doctor.user.get_full_name }}</td>
+                            <td>{{ appointment.patient.get_full_name }}</td>
+                            <td>{{ appointment.appointment_date|date:"M d, Y" }}</td>
+                            <td>{{ appointment.appointment_time|time:"h:i A" }}</td>
+                            <td>
+                                <span class="badge {% if appointment.completed %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if appointment.completed %}Completed{% else %}Scheduled{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">No appointments found.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

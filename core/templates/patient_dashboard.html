@@ -4,7 +4,7 @@
 <div class="container mt-4">
   <div class="row mb-4">
     <div class="col">
-      <h2>📊 My Health Data</h2>
+      <h2>My Health Data</h2>
     </div>
   </div>
 
@@ -13,20 +13,20 @@
     <div class="col-auto">
       <form method="post" action="{% url 'simulate_all_vitals' %}" class="d-inline">
           {% csrf_token %}
-          <button class="btn btn-warning">🧪 Simulate Full Vitals</button>
+          <button class="btn btn-warning">Simulate Full Vitals</button>
       </form>
     </div>
     <div class="col-auto">
       {% if request.user.patient.fitbit_connected %}
         <div class="d-inline-flex align-items-center">
-          <span class="badge bg-success me-2">✅ Fitbit Connected</span>
+          <span class="badge bg-success me-2">Fitbit Connected</span>
           <form method="post" action="{% url 'fitbit_logout' %}" class="d-inline">
             {% csrf_token %}
             <button type="submit" class="btn btn-outline-danger btn-sm">Disconnect Fitbit</button>
           </form>
         </div>
       {% else %}
-        <a href="{% url 'fitbit_login' %}" class="btn btn-primary">🔗 Connect Fitbit</a>
+        <a href="{% url 'fitbit_login' %}" class="btn btn-primary">Connect Fitbit</a>
       {% endif %}
     </div>
     {% endif %}
@@ -34,9 +34,9 @@
 
   {% if request.user.fitbitvitals_set.last %}
     <div class="alert alert-info">
-        📊 Last HR Reading: {{ request.user.fitbitvitals_set.last.resting_heart_rate }} bpm
+        Last HR Reading: {{ request.user.fitbitvitals_set.last.resting_heart_rate }} bpm
         {% if request.user.fitbitvitals_set.last.alert_triggered %}
-            <strong class="text-danger">🚨 ALERT Triggered!</strong>
+            <strong class="text-danger">ALERT Triggered!</strong>
         {% endif %}
     </div>
   {% endif %}
@@ -71,11 +71,11 @@
       renderChart('tempChart', 'Body Temperature (°F)', {{ temp_data|safe }}, {{ labels|safe }}, 'orange');
     </script>
   {% else %}
-    <div class="alert alert-warning">⚠️ No vitals yet — {% if role == "patient" %}try simulating some data{% else %}no data available{% endif %}.</div>
+    <div class="alert alert-warning">No vitals yet — {% if role == "patient" %}try simulating some data{% else %}no data available{% endif %}.</div>
   {% endif %}
 
 </div>
-<h4 class="mt-5">🧾 Recent Vitals History</h4>
+<h4 class="mt-5">Recent Vitals History</h4>
 <table class="table table-striped mt-2">
     <thead>
         <tr>
@@ -95,7 +95,7 @@
             <td>{{ v.body_temp }}</td>
             <td>
                 {% if v.alert_triggered %}
-                    <span class="badge bg-danger">🚨 ALERT</span>
+                    <span class="badge bg-danger">ALERT</span>
                 {% else %}
                     <span class="badge bg-success">OK</span>
                 {% endif %}

@@ -123,13 +123,12 @@ class MedicationSchedule(models.Model):
 
 # doctor appointment 
 class Appointment(models.Model):
-    patient = models.ForeignKey('notifications.Patient', on_delete=models.CASCADE)  # ✅ Add this!
+    patient = models.ForeignKey('notifications.Patient', on_delete=models.CASCADE)
     doctor = models.ForeignKey('notifications.Doctor', on_delete=models.CASCADE)
-
     appointment_date = models.DateField()
     appointment_time = models.TimeField()
-    
     reminder_sent = models.BooleanField(default=False)
+    completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Appointment with {self.doctor.user.username if self.doctor.user else 'Unknown Doctor'} on {self.appointment_date} at {self.appointment_time}"

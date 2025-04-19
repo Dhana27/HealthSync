@@ -559,23 +559,11 @@ def doctor_dashboard(request):
 ### ADMIN DASHBOARD ###
 @login_required
 def admin_dashboard_view(request):
-    """Admin can assign roles & view users."""
+    """Admin dashboard view."""
     if not request.user.is_superuser:
-        return redirect('home')
-
-    users = User.objects.all()
-    
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        new_role = request.POST.get('new_role')
-        if user_id and new_role:
-            user = get_object_or_404(User, id=user_id)
-            group = Group.objects.get(name=new_role)
-            user.groups.clear()
-            user.groups.add(group)
-            messages.success(request, 'Role updated successfully!')
-    
-    return render(request, 'admin_dashboard.html', {'users': users})
+        messages.error(request, "Access denied.")
+        return redirect("home")
+    return redirect('admin_patient_list')
 
 @login_required
 def refresh_chat(request):

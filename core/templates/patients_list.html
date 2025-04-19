@@ -1,16 +1,26 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-4">
-    <h2>Patients List</h2>
-    <ul class="list-group">
-        {% for patient in patients %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ patient.user.username }}
-                <a href="{% url 'manage_patient_health' patient.id %}" class="btn btn-sm btn-primary">View Health</a>
-            </li>
-        {% empty %}
-            <li class="list-group-item">No patients assigned yet.</li>
-        {% endfor %}
-    </ul>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0">Patients List</h2>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for patient in patients %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <span>{{ patient.user.username }}</span>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="{% url 'manage_patient_health' patient.id %}" class="btn btn-primary btn-sm px-3">View Health</a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-center">No patients assigned yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

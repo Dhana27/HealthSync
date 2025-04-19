@@ -46,9 +46,9 @@ def get_user_role(user):
 # Doctors Only - Manage Patient Health
 @login_required
 def manage_patient_health(request, patient_id):
-    """Doctors can set medication reminders, appointment reminders, and diet tips"""
+    """Doctors and admins can view and manage patient health records"""
     role = get_user_role(request.user)
-    if role != "doctor":
+    if role not in ["doctor", "admin"] and not request.user.is_superuser:
         messages.error(request, "Access denied.")
         return redirect("home")
 
@@ -58,11 +58,14 @@ def manage_patient_health(request, patient_id):
     medical_history = MedicalHistory.objects.filter(patient=patient).order_by("-date", "-time")
     medication_schedules = MedicationSchedule.objects.filter(patient=patient).order_by("-date", "-time")
 
-    # Initialize forms
-    app_form = AppointmentReminderForm()
-    diet_form = DietTipForm()
+    # Initialize forms - only for doctors
+    app_form = None
+    diet_form = None
+    if role == "doctor":
+        app_form = AppointmentReminderForm()
+        diet_form = DietTipForm()
 
-    if request.method == "POST":
+    if request.method == "POST" and role == "doctor":
         form_type = request.POST.get("form_type")
 
         if form_type == "consultation":
@@ -141,14 +144,21 @@ def manage_patient_health(request, patient_id):
                 messages.success(request, "✅ Diet tip has been added.")
                 return redirect("manage_patient_health", patient_id=patient.id)
 
-    return render(request, "manage_patient_health.html", {
-        "app_form": app_form,
-        "diet_form": diet_form,
+    context = {
         "medication_schedules": medication_schedules,
         "medical_history": medical_history,
         "patient": patient,
-        "role": "doctor"
-    })
+        "role": role
+    }
+    
+    # Only add forms to context if user is a doctor
+    if role == "doctor":
+        context.update({
+            "app_form": app_form,
+            "diet_form": diet_form
+        })
+
+    return render(request, "manage_patient_health.html", context)
 
 # Patients Only - View Their Health Updates
 @login_required
@@ -576,3 +586,80 @@ def submit_feedback(request):
             return redirect('patient_dashboard')
             
     return render(request, 'patient_feedback.html')
+
+@login_required
+def admin_medical_history(request, patient_id):
+    """Admin view for patient medical history"""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    try:
+        patient = get_object_or_404(Patient, id=patient_id)
+    except:
+        messages.error(request, f"Patient with ID {patient_id} does not exist.")
+        return redirect("admin:index")  # Redirect back to admin dashboard
+    
+    # Fetch medical history and medication schedules
+    medical_history = MedicalHistory.objects.filter(patient=patient).order_by("-date", "-time")
+    medication_schedules = MedicationSchedule.objects.filter(patient=patient).order_by("-date", "-time")
+
+    context = {
+        "medication_schedules": medication_schedules,
+        "medical_history": medical_history,
+        "patient": patient,
+        "role": "admin"
+    }
+
+    return render(request, "admin_medical_history.html", context)
+
+@login_required
+def admin_patient_list(request):
+    """Admin view to list all patients and their records"""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    # Get all patients with their latest appointment
+    patients = Patient.objects.all().select_related('user').prefetch_related(
+        'appointment_set'  # For getting appointments
+    )
+
+    patient_data = []
+    for patient in patients:
+        latest_appointment = patient.appointment_set.order_by('-appointment_date', '-appointment_time').first()
+        patient_data.append({
+            'patient': patient,
+            'created_at': patient.user.date_joined,
+            'last_appointment': latest_appointment.appointment_date if latest_appointment else None
+        })
+
+    return render(request, "admin_patient_list.html", {
+        "patient_data": patient_data,
+        "role": "admin"
+    })
+
+@login_required
+def admin_appointments(request):
+    """Admin view to list all appointments"""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    appointments = Appointment.objects.all().select_related(
+        'doctor__user',  # For doctor's name
+        'patient'        # For patient's name
+    ).order_by('-appointment_date', '-appointment_time')
+
+    return render(request, "admin_appointments.html", {
+        "appointments": appointments,
+        "role": "admin"
+    })
+
+def debug_appointments(request):
+    """Debug view to display appointments directly"""
+    from .models import Appointment
+    appointments = Appointment.objects.all()
+    return render(request, 'notifications/debug_appointments.html', {
+        'appointments': appointments
+    })

@@ -5,7 +5,8 @@ from .views import (
     doctor_consultation_room, accept_consultation, complete_consult, 
     start_call, check_consult_status, cancel_consultation, 
     create_prescription, view_prescription_pdf, fitbit_logout,
-    mark_medication_taken, submit_feedback
+    mark_medication_taken, submit_feedback, admin_medical_history,
+    admin_patient_list, admin_appointments, debug_appointments
     #doctor_messages, chat_detail, join_call,
 )
 
@@ -34,6 +35,12 @@ urlpatterns = [
     path('medication/<int:medication_id>/mark-taken/', mark_medication_taken, name='mark_medication_taken'),
 
     path('submit-feedback/', submit_feedback, name='submit_feedback'),
+
+    path('admin/patients/', admin_patient_list, name='admin_patient_list'),
+    path('admin/patient/<int:patient_id>/medical-history/', admin_medical_history, name='admin_medical_history'),
+    path('admin/appointments/', admin_appointments, name='admin_appointments'),
+
+    path('debug/appointments/', debug_appointments, name='debug_appointments'),
 
     #path('generate-token/', generate_100ms_token, name='generate_100ms_token'),
 

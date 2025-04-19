@@ -49,15 +49,13 @@ HMS_ROOM_CODES = {
 HMS_SUBDOMAIN = "healthsync-videoconf-1025"
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'django.contrib.admin',  # Use default admin app
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core.apps.CoreConfig',# <-- Our app
-    "crispy_forms",
-    "crispy_bootstrap5",
+    'core.apps.CoreConfig',
     'notifications',
     'recovery',
 ]

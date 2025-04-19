@@ -17,35 +17,73 @@
     {% elif role == "patient" %}
         <h2>Your Health Updates</h2>
 
-        <!-- Upcoming Medications -->
-        <h4>Upcoming Medications</h4>
-        <ul>
-            {% for reminder in medication_reminders %}
-                <li>{{ reminder.medication_name }} - Dosage: {{ reminder.dosage }} at {{ reminder.time }}</li>
-            {% empty %}
-                <li>No medications set.</li>
-            {% endfor %}
-        </ul>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Upcoming Medications</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for reminder in medication_reminders %}
+                        <li class="list-group-item">{{ reminder.medication_name }} - Dosage: {{ reminder.dosage }} at {{ reminder.time }}</li>
+                    {% empty %}
+                        <li class="list-group-item">No medications set.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
 
-        <!-- Upcoming Appointments -->
-        <h4>Upcoming Appointments</h4>
-        <ul>
-            {% for appointment in appointments %}
-                <li>Dr. {{ appointment.doctor_name }} on {{ appointment.appointment_date }}</li>
-            {% empty %}
-                <li>No upcoming appointments.</li>
-            {% endfor %}
-        </ul>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Upcoming Appointments</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for appointment in appointments %}
+                        <li class="list-group-item">Dr. {{ appointment.doctor_name }} on {{ appointment.appointment_date }}</li>
+                    {% empty %}
+                        <li class="list-group-item">No upcoming appointments.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
 
-        <!-- Recovery Tips -->
-        <h4>Recovery Tips</h4>
-        <ul>
-            {% for tip in recovery_tips %}
-                <li>{{ tip.advice }}</li>
-            {% empty %}
-                <li>No tips available.</li>
-            {% endfor %}
-        </ul>
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Recovery Tips</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for tip in recovery_tips %}
+                        <li class="list-group-item">{{ tip.advice }}</li>
+                    {% empty %}
+                        <li class="list-group-item">No tips available.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     {% endif %}
 </div>
+
+<style>
+    .card {
+        border-radius: 0.75rem;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+        padding: 1rem 1.5rem;
+    }
+    
+    .list-group-item {
+        border: none;
+        padding: 1rem 1.5rem;
+    }
+    
+    .list-group-item:not(:last-child) {
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+</style>
 {% endblock %}

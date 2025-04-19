@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HealthSync</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   {% load static %}
@@ -9,34 +10,143 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
-    body { padding-top: 70px; }
-    .active { font-weight: bold; color: #007bff !important; }
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #1e40af;
+      --accent-color: #3b82f6;
+      --text-color: #1f2937;
+      --light-bg: #f3f4f6;
+      --border-color: #e5e7eb;
+    }
+
+    body { 
+      padding-top: 56px;
+      color: var(--text-color);
+      background-color: var(--light-bg);
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background-color: var(--primary-color) !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      height: 56px;
+      z-index: 1030;
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+      font-size: 1.5rem;
+    }
+
+    .nav-link {
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .active {
+      background-color: var(--secondary-color);
+      color: white !important;
+    }
+
     #side-panel {
-      height: 100vh;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .side-panel-content {
-      flex: 1;
+      position: fixed;
+      left: 0;
+      top: 56px;
+      bottom: 0;
+      width: 250px;
+      background-color: white;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+      padding: 1.5rem;
       overflow-y: auto;
+      z-index: 1020;
     }
 
-    .navbar-nav .nav-link {
-      padding: 8px 16px;
-      transition: all 0.3s ease;
+    .main-content {
+      margin-left: 250px;
+      padding: 1.5rem;
+      min-height: calc(100vh - 56px);
     }
 
-    .navbar-nav .nav-link:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
+    .list-group-item {
+      border: none;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 0.5rem !important;
+      transition: all 0.2s ease;
+    }
+
+    .list-group-item:hover {
+      background-color: var(--light-bg);
+    }
+
+    .list-group-item a {
+      color: var(--text-color);
+      text-decoration: none;
+      display: block;
+      width: 100%;
+    }
+
+    .alert {
+      border-radius: 0.5rem;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .card {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .btn {
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+    }
+
+    .container-fluid {
+      padding: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      #side-panel {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      #side-panel.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .navbar-toggler {
+        display: block;
+      }
     }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-    <div class="container">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'home' %}">HealthSync</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -47,7 +157,7 @@
             {% if role == "doctor" %}
               <li class="nav-item"><a class="nav-link" href="{% url 'edit_doctor_profile' %}">Profile</a></li>
             {% elif role == "patient" %}
-              <li class="nav-item"><a class="nav-link" href="{% url 'edit_patient_profile' %}">👤 Profile</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'edit_patient_profile' %}">Profile</a></li>
             {% endif %}
             <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
           {% else %}
@@ -58,40 +168,36 @@
     </div>
   </nav>
   
-  <div class="container-fluid">
-    <div class="row">
-      {% if user.is_authenticated and role %}
-        <div class="col-md-3 bg-light p-3" id="side-panel">
-          <h4>HealthSync</h4>
-          <div class="side-panel-content">
-            <ul class="list-group">
-              {% if role == "doctor" %}
-                <li class="list-group-item"><a href="{% url 'patients_list' %}">Patients</a></li>
-                <li class="list-group-item"><a href="{% url 'messages' %}">Messages</a></li> 
-                <li class="list-group-item"><a href="{% url 'doctor_dashboard' %}">Doctor Dashboard</a></li> 
-                <li class="list-group-item"><a href="{% url 'doctor_consultation_room' %}">Virtual Consultation</a></li>
-              {% elif role == "patient" %}
-                <li class="list-group-item"><a href="{% url 'view_reminders' %}">🏥 Health Hub</a></li>
-                <li class="list-group-item"><a href="{% url 'patient_dashboard' %}">📊 My Health Data</a></li>
-                <li class="list-group-item"><a href="{% url 'available_doctors' %}">Virtual Consultation</a></li>
-              {% endif %}
-            </ul>
-          </div>
+  {% if user.is_authenticated and role %}
+    <div id="side-panel">
+      <div class="side-panel-content">
+        <div class="list-group">
+          {% if role == "doctor" %}
+            <a href="{% url 'patients_list' %}" class="list-group-item">Patients</a>
+            <a href="{% url 'messages' %}" class="list-group-item">Messages</a>
+            <a href="{% url 'doctor_dashboard' %}" class="list-group-item">Dashboard</a>
+            <a href="{% url 'doctor_consultation_room' %}" class="list-group-item">Virtual Consultation</a>
+          {% elif role == "patient" %}
+            <a href="{% url 'view_reminders' %}" class="list-group-item">Health Hub</a>
+            <a href="{% url 'patient_dashboard' %}" class="list-group-item">My Health Data</a>
+            <a href="{% url 'available_doctors' %}" class="list-group-item">Virtual Consultation</a>
+          {% endif %}
         </div>
-      {% endif %}
-      
-      <div class="col-md-9">
-        {% block content %}{% endblock %}
       </div>
     </div>
-  </div>
-  
-  <div class="container mt-3">
+  {% endif %}
+      
+  <div class="main-content">
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-info" role="alert">{{ message }}</div>
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
       {% endfor %}
     {% endif %}
+    
+    {% block content %}{% endblock %}
   </div>
   
   {% if role == 'patient' %}
@@ -103,19 +209,25 @@
     <div id="chatWidgetContainer">
       {% include 'chat_widget.html' %}
     </div>
-    
-    <script>
-      console.log('Chat widget should be loaded for patient');
-      console.log('Debug info:', document.getElementById('debugInfo').textContent);
-      
-      if (window.jQuery) {
-        console.log('jQuery is loaded');
-      } else {
-        console.log('jQuery is NOT loaded');
-      }
-    </script>
   {% endif %}
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Handle mobile navigation
+    document.querySelector('.navbar-toggler').addEventListener('click', function() {
+      document.getElementById('side-panel').classList.toggle('show');
+    });
+
+    // Add active class to current navigation item
+    document.addEventListener('DOMContentLoaded', function() {
+      const currentPath = window.location.pathname;
+      const navLinks = document.querySelectorAll('.list-group-item');
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
 </body>
 </html>

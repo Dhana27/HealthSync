@@ -1,0 +1,218 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list admin_extras %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static "admin/css/forms.css" %}">
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #1e40af;
+      --accent-color: #3b82f6;
+      --text-color: #1f2937;
+      --light-bg: #f3f4f6;
+      --border-color: #e5e7eb;
+    }
+
+    .main-content {
+      padding: 20px;
+      background: #f8fafc;
+      min-height: calc(100vh - 60px);
+    }
+
+    .appointment-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      margin-bottom: 20px;
+    }
+
+    .page-header h2 {
+      color: var(--text-color);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .appointment-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .appointment-table th {
+      background: var(--light-bg);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .appointment-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .appointment-table tr:hover {
+      background: var(--light-bg);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .status-completed {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-scheduled {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-button {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+
+    .action-button.edit {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .action-button.delete {
+      background: #ef4444;
+      color: white;
+    }
+
+    .action-button:hover {
+      opacity: 0.9;
+    }
+
+    .pagination {
+      padding: 15px 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .pagination a {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--text-color);
+    }
+
+    .pagination a:hover {
+      background: var(--light-bg);
+    }
+
+    .pagination .current {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+  <div class="appointment-container">
+    <div class="page-header">
+      <h2>{% trans "Appointments" %}</h2>
+    </div>
+
+    <div class="table-container">
+      <table class="appointment-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Reminder</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for result in cl.result_list %}
+            <tr>
+              <td>{{ result.patient }}</td>
+              <td>{{ result.doctor }}</td>
+              <td>{{ result.appointment_date }}</td>
+              <td>{{ result.appointment_time }}</td>
+              <td>
+                {% if result.completed %}
+                  <span class="status-badge status-completed">Completed</span>
+                {% else %}
+                  <span class="status-badge status-scheduled">Scheduled</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if result.reminder_sent %}
+                  <span class="status-badge status-completed">Sent</span>
+                {% else %}
+                  <span class="status-badge status-pending">Pending</span>
+                {% endif %}
+              </td>
+              <td class="action-buttons">
+                <a href="{% url 'admin:notifications_appointment_change' result.id %}" class="action-button edit">Edit</a>
+                <a href="{% url 'admin:notifications_appointment_delete' result.id %}" class="action-button delete">Delete</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 20px;">No appointments found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if cl.result_count > cl.per_page %}
+        <div class="pagination">
+          {% if cl.page_num > 1 %}
+            <a href="?page={{ cl.page_num|add:"-1" }}">&laquo; Previous</a>
+          {% endif %}
+          
+          <span class="current">Page {{ cl.page_num }} of {{ cl.paginator.num_pages }}</span>
+          
+          {% if cl.page_num < cl.paginator.num_pages %}
+            <a href="?page={{ cl.page_num|add:"1" }}">Next &raquo;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,203 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static "admin/css/forms.css" %}">
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #1e40af;
+      --accent-color: #3b82f6;
+      --text-color: #1f2937;
+      --light-bg: #f3f4f6;
+      --border-color: #e5e7eb;
+    }
+
+    .appointment-form {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin: 20px 0;
+    }
+
+    .appointment-header {
+      background: var(--light-bg);
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .appointment-header h2 {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .form-row {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-row:last-child {
+      border-bottom: none;
+    }
+
+    .form-row label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    .form-row input:focus,
+    .form-row select:focus,
+    .form-row textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    .submit-row {
+      padding: 15px 20px;
+      background: var(--light-bg);
+      border-top: 1px solid var(--border-color);
+      border-radius: 0 0 8px 8px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .submit-row input {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .submit-row input[type="submit"] {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .submit-row input[type="submit"]:hover {
+      background: var(--secondary-color);
+    }
+
+    .submit-row .default {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .submit-row .default:hover {
+      background: var(--secondary-color);
+    }
+
+    .submit-row .delete-link {
+      background: #ef4444;
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .submit-row .delete-link:hover {
+      background: #dc2626;
+    }
+
+    .help {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-top: 4px;
+    }
+
+    .errorlist {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 4px;
+      list-style: none;
+      padding: 0;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="appointment-form">
+  <div class="appointment-header">
+    <h2>
+      {% if original %}
+        {% trans "Edit Appointment" %}
+      {% else %}
+        {% trans "Add Appointment" %}
+      {% endif %}
+    </h2>
+  </div>
+
+  <form method="post" id="{{ opts.model_name }}_form" novalidate>
+    {% csrf_token %}
+    {% block form_top %}{% endblock %}
+    
+    {% if errors %}
+      <div class="errorlist">
+        {% for error in errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% for fieldset in adminform %}
+      <fieldset class="form-row">
+        {% if fieldset.name %}
+          <h3>{{ fieldset.name }}</h3>
+        {% endif %}
+        
+        {% for line in fieldset %}
+          <div class="form-row">
+            {% for field in line %}
+              <div class="field-box">
+                {{ field.field.label_tag }}
+                {{ field.field }}
+                {% if field.field.help_text %}
+                  <div class="help">{{ field.field.help_text|safe }}</div>
+                {% endif %}
+                {% if field.field.errors %}
+                  <div class="errorlist">
+                    {% for error in field.field.errors %}
+                      <p>{{ error }}</p>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </fieldset>
+    {% endfor %}
+
+    <div class="submit-row">
+      {% if original %}
+        <a href="{% url 'admin:notifications_appointment_delete' original.pk %}" class="delete-link">
+          {% trans "Delete" %}
+        </a>
+      {% endif %}
+      <input type="submit" value="{% trans 'Save' %}" class="default" name="_save">
+    </div>
+  </form>
+</div>
+{% endblock %} 

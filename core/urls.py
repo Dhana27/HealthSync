@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .views import (
     home_view, login_view, logout_view, 
     patient_chat_view, patients_list, messages_view, 
@@ -29,5 +29,6 @@ urlpatterns = [
     path('edit-profile/', edit_patient_profile, name='edit_patient_profile'),
     path('edit-doctor-profile/', edit_doctor_profile, name='edit_doctor_profile'),
 
-
+    # Include notifications URLs
+    path('notifications/', include('notifications.urls')),
 ]

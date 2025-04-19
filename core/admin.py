@@ -1,14 +1,13 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin, GroupAdmin
 from django.utils.html import format_html
 from notifications.models import Patient, Doctor, Appointment, MedicationSchedule
-from .models import PatientRecord
-
-admin.site.site_header = 'HealthSync Administration'
-admin.site.site_title = 'HealthSync Admin Portal'
-admin.site.index_title = 'Welcome to HealthSync Admin Portal'
+from .models import PatientRecord, FitbitVitals
+from django.urls import reverse
+from .admin_site import admin_site
+from django.shortcuts import redirect
 
 class MedicationInline(admin.TabularInline):
     model = MedicationSchedule
@@ -23,19 +22,27 @@ class PatientRecordInline(admin.TabularInline):
     readonly_fields = ('created_at',)
     can_delete = True
 
-@admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('user_full_name', 'assigned_doctor', 'phone_number', 'caregiver_phone', 'email')
-    list_filter = ('assigned_doctor', 'user__date_joined')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'email', 'phone_number')
-    list_select_related = ('user', 'assigned_doctor')
-    inlines = [MedicationInline, PatientRecordInline]
+    list_display = ('get_full_name', 'get_email', 'created_at', 'view_medical_history')
+    search_fields = ['user__first_name', 'user__last_name', 'user__email']
     
-    def user_full_name(self, obj):
-        return f"{obj.user.first_name} {obj.user.last_name}"
-    user_full_name.short_description = 'Patient Name'
+    def get_full_name(self, obj):
+        return obj.user.get_full_name()
+    get_full_name.short_description = 'Patient Name'
+    
+    def get_email(self, obj):
+        return obj.user.email
+    get_email.short_description = 'Email'
+    
+    def created_at(self, obj):
+        return obj.user.date_joined
+    created_at.short_description = 'Created At'
+    
+    def view_medical_history(self, obj):
+        url = reverse('admin_medical_history', args=[obj.id])
+        return format_html('<a class="button" href="{}">View Medical History</a>', url)
+    view_medical_history.short_description = 'Medical History'
 
-@admin.register(Doctor)
 class DoctorAdmin(admin.ModelAdmin):
     list_display = ('user_full_name', 'specialty', 'role', 'patient_count', 'upcoming_appointments')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'specialty')
@@ -54,17 +61,33 @@ class DoctorAdmin(admin.ModelAdmin):
         return format_html('<span style="color: #2563eb;">{}</span>', count)
     upcoming_appointments.short_description = 'Pending Appointments'
 
-@admin.register(PatientRecord)
 class PatientRecordAdmin(admin.ModelAdmin):
-    list_display = ('patient', 'created_at', 'diagnosis', 'has_prescription')
-    list_filter = ('created_at', 'patient')
-    search_fields = ('patient__username', 'symptoms', 'diagnosis')
-    date_hierarchy = 'created_at'
+    list_display = ('get_patient_name', 'created_at', 'get_last_appointment')
+    search_fields = ('patient__user__username', 'patient__user__first_name', 'patient__user__last_name')
+    ordering = ('-created_at',)
     
-    def has_prescription(self, obj):
-        return bool(obj.prescription)
-    has_prescription.boolean = True
-    has_prescription.short_description = 'Has Prescription'
+    def get_patient_name(self, obj):
+        return obj.patient.user.get_full_name() or obj.patient.user.username
+    get_patient_name.short_description = 'Patient Name'
+    
+    def get_last_appointment(self, obj):
+        last_appointment = Appointment.objects.filter(patient=obj.patient.user).order_by('-date').first()
+        if last_appointment:
+            return last_appointment.date
+        return None
+    get_last_appointment.short_description = 'Last Appointment'
+
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/notifications/admin/patients/')  # Redirect to our custom view
 
 class SingleGroupUserChangeForm(forms.ModelForm):
     group = forms.ModelChoiceField(queryset=Group.objects.all(), required=False)
@@ -115,5 +138,10 @@ class CustomUserAdmin(BaseUserAdmin):
                 obj.groups.clear()
                 obj.groups.add(group)
 
-admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
+# Register models with our custom admin site
+admin_site.register(Group, GroupAdmin)
+admin_site.register(Patient, PatientAdmin)
+admin_site.register(Doctor, DoctorAdmin)
+admin_site.register(PatientRecord, PatientRecordAdmin)
+admin_site.register(User, CustomUserAdmin)
+admin_site.register(FitbitVitals)

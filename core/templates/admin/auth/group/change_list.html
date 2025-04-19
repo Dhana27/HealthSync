@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}">
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h2>Groups</h2>
+    {% if has_add_permission %}
+      <a href="{% url 'admin:auth_group_add' %}" class="btn btn-primary">
+        Add Group
+      </a>
+    {% endif %}
+  </div>
+  
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in cl.result_list %}
+          <tr>
+            <td>{{ group.name }}</td>
+            <td>
+              <a href="{% url 'admin:auth_group_change' group.pk %}" class="btn btn-sm btn-outline-primary">
+                Edit
+              </a>
+              <a href="{% url 'admin:auth_group_delete' group.pk %}" class="btn btn-sm btn-outline-danger">
+                Delete
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% block pagination %}
+      {% pagination cl %}
+    {% endblock %}
+  </div>
+</div>
+{% endblock %} 

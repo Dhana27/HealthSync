@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'admin/css/custom_admin.css' %}">
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-welcome">
+    <h2>Welcome to Virtual Assistant Admin</h2>
+    <p>Manage your application's data, users, and settings from this centralized dashboard.</p>
+</div>
+
+<div class="app-list">
+    {% for app in app_list %}
+    <div class="app-card">
+        <h3>{{ app.name }}</h3>
+        <ul class="model-list">
+            {% for model in app.models %}
+            <li>
+                {% if model.admin_url %}
+                <a href="{{ model.admin_url }}">{{ model.name }}</a>
+                {% else %}
+                {{ model.name }}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block sidebar %}{% endblock %} 

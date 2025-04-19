@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}">
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h2>Users</h2>
+    {% if has_add_permission %}
+      <a href="{% url 'admin:auth_user_add' %}" class="btn btn-primary">
+        Add User
+      </a>
+    {% endif %}
+  </div>
+  
+  <div class="card-body">
+    <!-- Admin Users Section -->
+    <div class="user-section">
+      <div class="user-section-header">
+        <i class="fas fa-user-shield"></i> Admin Users
+      </div>
+      <div class="user-list">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in cl.result_list %}
+                {% if user.is_superuser %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctor Users Section -->
+    <div class="user-section">
+      <div class="user-section-header">
+        <i class="fas fa-user-md"></i> Doctors
+      </div>
+      <div class="user-list">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in cl.result_list %}
+                {% if user.groups.all.0.name == 'Doctor' %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient Users Section -->
+    <div class="user-section">
+      <div class="user-section-header">
+        <i class="fas fa-user"></i> Patients
+      </div>
+      <div class="user-list">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in cl.result_list %}
+                {% if user.groups.all.0.name == 'Patient' %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

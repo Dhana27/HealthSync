@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Debug: Appointments</h2>
+  <p>Total appointments: {{ appointments|length }}</p>
+  
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Completed</th>
+        <th>Reminder Sent</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appointment in appointments %}
+        <tr>
+          <td>{{ appointment.id }}</td>
+          <td>{{ appointment.patient }}</td>
+          <td>{{ appointment.doctor }}</td>
+          <td>{{ appointment.appointment_date }}</td>
+          <td>{{ appointment.appointment_time }}</td>
+          <td>{{ appointment.completed }}</td>
+          <td>{{ appointment.reminder_sent }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %} 
