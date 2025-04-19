@@ -1,0 +1,229 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+<style>
+    :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #34495e;
+        --accent-color: #3498db;
+        --text-color: #2c3e50;
+        --light-bg: #f8f9fa;
+        --border-color: #e9ecef;
+        --hover-color: #ecf0f1;
+        --header-bg: #2c3e50;
+        --header-text: #ffffff;
+    }
+
+    body {
+        background: var(--light-bg);
+        color: var(--text-color);
+    }
+
+    #header {
+        background: var(--header-bg);
+        color: var(--header-text);
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #branding h1 {
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+    #branding h1 a {
+        color: var(--header-text);
+    }
+
+    .module h2, .module caption, .inline-group h2 {
+        background: var(--secondary-color);
+        color: white;
+        padding: 1rem;
+        font-weight: 500;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .module {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .submit-row {
+        background: var(--light-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .button, input[type=submit], input[type=button], .submit-row input {
+        background: var(--accent-color);
+        color: white;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover {
+        background: #2980b9;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #content-related {
+        background: var(--light-bg);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .form-row {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-row:last-child {
+        border-bottom: none;
+    }
+
+    #changelist-filter h2 {
+        background: var(--secondary-color);
+        color: white;
+        padding: 1rem;
+        border-radius: 8px 8px 0 0;
+    }
+
+    #changelist-filter {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .object-tools {
+        margin-top: 1rem;
+    }
+
+    .object-tools a {
+        background: var(--accent-color);
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        color: white;
+        transition: all 0.2s ease;
+    }
+
+    .object-tools a:hover {
+        background: #2980b9;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Remove My Actions section */
+    div.module[id^="recent-actions"] {
+        display: none;
+    }
+
+    /* Table styles */
+    #changelist table {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background: white;
+    }
+
+    #changelist table thead th {
+        background: var(--secondary-color);
+        color: white;
+        padding: 1rem;
+        font-weight: 500;
+    }
+
+    #changelist table tbody tr {
+        background: white;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    #changelist table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    #changelist table tbody tr:hover {
+        background: var(--hover-color);
+    }
+
+    #changelist table tbody td {
+        padding: 1rem;
+    }
+
+    /* Pagination styles */
+    .paginator {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .paginator a {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .paginator a:hover {
+        background: var(--hover-color);
+    }
+
+    /* Breadcrumbs */
+    div.breadcrumbs {
+        background: var(--header-bg);
+        color: var(--header-text);
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    div.breadcrumbs a {
+        color: var(--header-text);
+    }
+
+    /* Links */
+    a:link, a:visited {
+        color: var(--accent-color);
+    }
+
+    a:hover {
+        color: #2980b9;
+    }
+
+    /* Messages */
+    ul.messagelist li {
+        background: var(--accent-color);
+        color: white;
+        border-radius: 4px;
+        padding: 1rem;
+        margin: 0 0 1rem 0;
+    }
+
+    ul.messagelist li.warning {
+        background: #f1c40f;
+    }
+
+    ul.messagelist li.error {
+        background: #e74c3c;
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        Virtual Assistant Administration
+    </a>
+</h1>
+{% endblock %} 
