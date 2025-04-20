@@ -61,14 +61,20 @@ class MedicationSchedule(models.Model):
         ('with', 'With Food')
     ], default='after')
     reminder_sent = models.BooleanField(default=False)
-    reminder_status = models.CharField(max_length=20, choices=[
+    STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('sent', 'Reminder Sent'),
-        ('overdue', 'Overdue Reminder Sent'),
-        ('taken', 'Medication Taken'),
-        ('missed', 'Medication Missed')
-    ], default='pending')
-    last_reminder_time = models.DateTimeField(null=True, blank=True)
+        ('sent', 'Sent'),
+        ('taken', 'Taken'),
+        ('overdue', 'Overdue'),
+        ('missed', 'Missed'),
+        ('ended', 'Ended')
+    ]
+    reminder_status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    last_status_date = models.DateField(default=timezone.now)
     taken_time = models.DateTimeField(null=True, blank=True)  # When the patient marked it as taken
     end_date = models.DateField(null=True, blank=True)  # Calculated based on start date + duration
 
@@ -88,7 +94,7 @@ class MedicationSchedule(models.Model):
         """Reset the reminder status for the next day"""
         self.reminder_status = 'pending'
         self.reminder_sent = False
-        self.last_reminder_time = None
+        self.last_status_date = timezone.now()
         self.taken_time = None
         self.save()
 

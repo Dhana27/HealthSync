@@ -23,6 +23,7 @@ from django.utils.timezone import now
 from datetime import datetime, timedelta
 import openai
 import json
+from django.utils import timezone
 
 import logging, io, time
 import random, string
@@ -176,13 +177,18 @@ def view_reminders(request):
 
     current_datetime = now()
     
-    # Get active medications (not older than 10 days)
-    ten_days_ago = current_datetime.date() - timedelta(days=10)
+    # Get active medications (not older than end date)
     medication_reminders = MedicationSchedule.objects.filter(
         patient=patient,
-        end_date__gte=ten_days_ago,
-        date__lte=current_datetime.date()
+        end_date__gte=current_datetime.date()
     ).order_by("date", "time")
+
+    # Update status for medications that have ended
+    MedicationSchedule.objects.filter(
+        patient=patient,
+        end_date__lt=current_datetime.date(),
+        reminder_status__in=['pending', 'sent', 'overdue', 'missed']
+    ).update(reminder_status='ended')
     
     appointments = Appointment.objects.filter(
         patient=patient,
@@ -663,3 +669,72 @@ def debug_appointments(request):
     return render(request, 'notifications/debug_appointments.html', {
         'appointments': appointments
     })
+
+def check_medication_status(request, medication_id):
+    """
+    Check and return the current status of a medication reminder.
+    Updates status based on current time and date.
+    """
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
+        medication = MedicationSchedule.objects.get(id=medication_id)
+        
+        # Check if user owns this medication
+        if medication.patient.user != request.user:
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+        now = timezone.now()
+        
+        # Check if medication has ended
+        if now.date() > medication.end_date:
+            if medication.reminder_status != 'ended':
+                medication.reminder_status = 'ended'
+                medication.last_status_date = now.date()
+                medication.save()
+            return JsonResponse({
+                'status': 'ended',
+                'last_updated': medication.last_status_date.isoformat()
+            })
+        
+        # If medication is already taken, don't change the status
+        if medication.reminder_status == 'taken':
+            return JsonResponse({
+                'status': medication.reminder_status,
+                'last_updated': medication.last_status_date.isoformat()
+            })
+            
+        medication_time = timezone.make_aware(
+            timezone.datetime.combine(medication.date, medication.time)
+        )
+        
+        # Reset status at midnight if not taken
+        if now.date() > medication.last_status_date:
+            medication.reminder_status = 'pending'
+            medication.last_status_date = now.date()
+            medication.save()
+        
+        # Update status based on current time
+        if medication.reminder_status == 'pending':
+            if now >= medication_time:
+                medication.reminder_status = 'sent'
+                medication.save()
+            
+            if now > medication_time + timezone.timedelta(hours=1):
+                medication.reminder_status = 'overdue'
+                medication.save()
+            
+            if now.date() > medication_time.date():
+                medication.reminder_status = 'missed'
+                medication.save()
+        
+        return JsonResponse({
+            'status': medication.reminder_status,
+            'last_updated': medication.last_status_date.isoformat()
+        })
+        
+    except MedicationSchedule.DoesNotExist:
+        return JsonResponse({'error': 'Medication not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -57,7 +57,7 @@
         <div class="card-body">
             <h3 class="card-title">Upcoming Medication Schedule</h3>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped" id="medicationTable">
                     <thead>
                         <tr>
                             <th>Medication</th>
@@ -72,14 +72,19 @@
                     </thead>
                     <tbody>
                         {% for med in medication_reminders %}
-                        <tr>
+                        <tr id="med-row-{{ med.id }}" 
+                            data-med-id="{{ med.id }}"
+                            data-med-time="{{ med.time|time:'H:i' }}"
+                            data-med-date="{{ med.date|date:'Y-m-d' }}"
+                            data-end-date="{{ med.end_date|date:'Y-m-d' }}"
+                            data-status="{{ med.reminder_status }}">
                             <td>{{ med.medication_name }}</td>
                             <td>{{ med.dosage }}</td>
                             <td>{{ med.time }}</td>
                             <td>{{ med.get_food_timing_display }}</td>
                             <td>{{ med.duration_days }} days</td>
                             <td>{{ med.end_date }}</td>
-                            <td>
+                            <td id="status-{{ med.id }}">
                                 {% if med.reminder_status == 'taken' %}
                                     <span class="badge bg-success">Taken</span>
                                 {% elif med.reminder_status == 'overdue' %}
@@ -88,19 +93,18 @@
                                     <span class="badge bg-warning">Missed</span>
                                 {% elif med.reminder_status == 'sent' %}
                                     <span class="badge bg-info">Reminder Sent</span>
+                                {% elif med.reminder_status == 'ended' %}
+                                    <span class="badge bg-secondary">Ended</span>
                                 {% else %}
                                     <span class="badge bg-secondary">Pending</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                {% if med.reminder_status != 'taken' %}
-                                <form method="POST" action="{% url 'mark_medication_taken' med.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        Mark as Taken
-                                    </button>
-                                </form>
-                                {% endif %}
+                            <td id="action-{{ med.id }}">
+                                <button onclick="markMedicationTaken({{ med.id }})" 
+                                        class="btn btn-sm {% if med.reminder_status == 'taken' or med.reminder_status == 'ended' %}btn-secondary{% else %}btn-success{% endif %} mark-taken-btn"
+                                        {% if med.reminder_status == 'taken' or med.reminder_status == 'ended' %}disabled{% endif %}>
+                                    Mark as Taken
+                                </button>
                             </td>
                         </tr>
                         {% empty %}
@@ -144,4 +148,205 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Function to check if a medication should be active based on date and time
+function isMedicationActive(medDate, medTime, endDate) {
+    const now = new Date();
+    const medicationDateTime = new Date(medDate + 'T' + medTime);
+    const medicationEndDate = new Date(endDate);
+    medicationEndDate.setHours(23, 59, 59); // End of the last day
+
+    return now >= medicationDateTime && now <= medicationEndDate;
+}
+
+// Function to check if a medication has ended
+function isMedicationEnded(endDate) {
+    const now = new Date();
+    const medicationEndDate = new Date(endDate);
+    medicationEndDate.setHours(23, 59, 59); // End of the last day
+    return now > medicationEndDate;
+}
+
+// Function to update medication status
+function updateMedicationStatus(medicationId) {
+    fetch(`/notifications/check_medication_status/${medicationId}/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const statusCell = document.querySelector(`#status-${medicationId}`);
+        const actionButton = document.querySelector(`#action-${medicationId} button`);
+        
+        // Update status badge
+        let badgeClass = '';
+        let badgeText = '';
+        
+        switch(data.status) {
+            case 'taken':
+                badgeClass = 'bg-success';
+                badgeText = 'Taken';
+                actionButton.disabled = true;
+                actionButton.classList.remove('btn-success');
+                actionButton.classList.add('btn-secondary');
+                break;
+            case 'overdue':
+                badgeClass = 'bg-danger';
+                badgeText = 'Overdue';
+                actionButton.disabled = false;
+                actionButton.classList.remove('btn-secondary');
+                actionButton.classList.add('btn-success');
+                break;
+            case 'missed':
+                badgeClass = 'bg-warning';
+                badgeText = 'Missed';
+                actionButton.disabled = false;
+                actionButton.classList.remove('btn-secondary');
+                actionButton.classList.add('btn-success');
+                break;
+            case 'sent':
+                badgeClass = 'bg-info';
+                badgeText = 'Reminder Sent';
+                actionButton.disabled = false;
+                actionButton.classList.remove('btn-secondary');
+                actionButton.classList.add('btn-success');
+                break;
+            case 'ended':
+                badgeClass = 'bg-secondary';
+                badgeText = 'Ended';
+                actionButton.disabled = true;
+                actionButton.classList.remove('btn-success');
+                actionButton.classList.add('btn-secondary');
+                break;
+            default:
+                badgeClass = 'bg-secondary';
+                badgeText = 'Pending';
+                actionButton.disabled = false;
+                actionButton.classList.remove('btn-secondary');
+                actionButton.classList.add('btn-success');
+        }
+        
+        statusCell.innerHTML = `<span class="badge ${badgeClass}">${badgeText}</span>`;
+    })
+    .catch(error => {
+        console.error('Error checking medication status:', error);
+    });
+}
+
+// Function to check all medications
+function checkAllMedications() {
+    const medications = document.querySelectorAll('#medicationTable tbody tr[data-med-id]');
+    
+    medications.forEach(med => {
+        const medId = med.dataset.medId;
+        const endDate = med.dataset.endDate;
+        
+        // First check if medication has ended based on end date
+        if (isMedicationEnded(endDate)) {
+            const statusCell = document.querySelector(`#status-${medId}`);
+            const actionButton = document.querySelector(`#action-${medId} button`);
+            
+            // Update UI for ended medication
+            statusCell.innerHTML = '<span class="badge bg-secondary">Ended</span>';
+            actionButton.disabled = true;
+            actionButton.classList.remove('btn-success');
+            actionButton.classList.add('btn-secondary');
+        }
+        
+        // Always check server status
+        updateMedicationStatus(medId);
+    });
+}
+
+// Mark medication as taken function
+function markMedicationTaken(medicationId) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const actionBtn = document.querySelector(`#action-${medicationId} button`);
+    const originalText = actionBtn.innerHTML;
+    
+    actionBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+    actionBtn.disabled = true;
+
+    fetch(`/notifications/mark_medication_taken/${medicationId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            updateMedicationStatus(medicationId);
+            showToast('Success', 'Medication marked as taken!', 'success');
+        } else {
+            actionBtn.innerHTML = originalText;
+            actionBtn.disabled = false;
+            showToast('Error', 'Failed to update status. Please try again.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        actionBtn.innerHTML = originalText;
+        actionBtn.disabled = false;
+        showToast('Error', 'Failed to update status. Please try again.', 'error');
+    });
+}
+
+// Show toast function (unchanged)
+function showToast(title, message, type) {
+    // You can implement this using your preferred toast library
+    // For example, using Bootstrap's toast:
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <strong>${title}</strong>: ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    
+    const toastElement = document.createElement('div');
+    toastElement.innerHTML = toastHtml;
+    document.getElementById('toast-container').appendChild(toastElement.firstChild);
+    
+    const toast = new bootstrap.Toast(document.getElementById('toast-container').lastChild);
+    toast.show();
+}
+
+// Initialize periodic checks
+document.addEventListener('DOMContentLoaded', function() {
+    // Check immediately on page load
+    checkAllMedications();
+    
+    // Check every 30 seconds for status updates
+    setInterval(checkAllMedications, 30000);
+    
+    // Check at midnight for date changes
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const timeUntilMidnight = tomorrow - now;
+    
+    setTimeout(() => {
+        checkAllMedications();
+        // After first midnight check, schedule daily checks
+        setInterval(checkAllMedications, 24 * 60 * 60 * 1000);
+    }, timeUntilMidnight);
+});
+</script>
 {% endblock %}
