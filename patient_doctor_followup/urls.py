@@ -7,7 +7,4 @@ urlpatterns = [
     path('admin/', admin_site.urls),
     path('', include('core.urls')),  # Includes URLs from our core app
     path('notifications/', include('notifications.urls')),
-    
-    # Add auth URLs
-    path('auth/', include('django.contrib.auth.urls')),
 ]

@@ -36,24 +36,41 @@ def home_view(request):
     return render(request, 'home.html')
 
 def login_view(request):
+    """
+    Handle user login with role-based redirects.
+    Supports 'next' parameter for redirect after login.
+    """
+    # Get the next URL from GET parameters, if provided
+    next_url = request.GET.get('next')
     form = AuthenticationForm(request, data=request.POST or None)
 
     if request.method == 'POST':
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            
+            # If there's a next URL and it's safe, use it
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
+            
+            # Otherwise, use role-based redirect
             role = get_user_role(user)
             if role == 'patient':
-                return redirect('view_reminders')
+                return redirect('patient_dashboard')
             elif role == 'doctor':
-                return redirect('patients_list')
+                return redirect('doctor_dashboard')
             elif role == 'admin':
-                return redirect('/admin/')
-            messages.error(request, 'User role not recognized.')
+                return redirect('admin_dashboard')
+            else:
+                messages.warning(request, 'User role not recognized. Please contact support.')
+                return redirect('home')
         else:
             messages.error(request, 'Invalid username or password.')
 
-    return render(request, 'login.html', {'form': form})
+    return render(request, 'login.html', {
+        'form': form,
+        'next': next_url
+    })
 
 def register_patient(request):
     if request.method == "POST":
@@ -78,8 +95,13 @@ def register_patient(request):
 
 
 def logout_view(request):
-    """Logout user and redirect to home."""
-    logout(request)
+    """
+    Handle user logout and redirect to home.
+    Supports both GET and POST requests for better compatibility.
+    """
+    if request.user.is_authenticated:
+        logout(request)
+        messages.success(request, "You have been successfully logged out.")
     return redirect('home')
 
 ### ROLE-BASED UTILITY FUNCTION ###

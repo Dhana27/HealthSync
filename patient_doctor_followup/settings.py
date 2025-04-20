@@ -17,6 +17,8 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = []
 
 LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/doctor-dashboard/'  # Default redirect for doctors
+LOGOUT_REDIRECT_URL = '/'  # Redirect to home page after logout
 STATIC_URL = '/static/'
 
 # Celery settings
@@ -118,6 +120,10 @@ LOGGING = {
     'disable_existing_loggers': False,
 }
 
+# Custom authentication backend
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 """LOGGING = {
     'version': 1,
