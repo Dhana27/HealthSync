@@ -1,6 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
+from django.utils import timezone
+from datetime import datetime
+from django.urls import reverse
 from .models import (
     MedicationSchedule, Appointment, Patient, Doctor, ConsultRequest, 
     Prescription, Medication, MedicalHistory, MedicalHistoryMedication,
@@ -8,8 +12,7 @@ from .models import (
 )
 from recovery.models import RecoveryTip
 from .forms import MedicationReminderForm, AppointmentReminderForm, DietTipForm, MedicalHistoryForm, MedicalHistoryMedicationForm
-from django.db.models import Q
-from core.models import Message  # ✅ Import Message model for conversations
+from core.models import Message  # Import Message model from core app
 from django.contrib.auth.models import Group, User
 from notifications.tasks import send_appointment_reminders
 from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
@@ -19,11 +22,12 @@ from xhtml2pdf import pisa
 from .create_room import create_room
 from notifications.token_utils import generate_token_for_user
 import jwt
-from django.utils.timezone import now
-from datetime import datetime, timedelta
+from django.utils.timezone import now, make_aware
+from datetime import timedelta
 import openai
 import json
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 import logging, io, time
 import random, string
@@ -636,8 +640,9 @@ def admin_patient_list(request):
         latest_appointment = patient.appointment_set.order_by('-appointment_date', '-appointment_time').first()
         patient_data.append({
             'patient': patient,
-            'created_at': patient.user.date_joined,
-            'last_appointment': latest_appointment.appointment_date if latest_appointment else None
+            'created_at': patient.user.date_joined,  # Use user's date_joined instead
+            'last_appointment_date': latest_appointment.appointment_date if latest_appointment else None,
+            'last_appointment_time': latest_appointment.appointment_time if latest_appointment else None
         })
 
     return render(request, "admin_patient_list.html", {
@@ -738,3 +743,176 @@ def check_medication_status(request, medication_id):
         return JsonResponse({'error': 'Medication not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def messages_view(request):
+    """Doctor sees patient list & full conversation with selected patient."""
+    if get_user_role(request.user) != "doctor":
+        return redirect('patients_list')
+
+    patients = Patient.objects.all()
+    messages_overview = {}
+
+    for patient in patients:
+        # Get latest message with timestamp for sorting
+        latest_message = Message.objects.filter(
+            Q(sender=patient.user, recipient=request.user) |
+            Q(sender=request.user, recipient=patient.user)
+        ).order_by('-timestamp').first()
+
+        # Get unread message count
+        unread_count = Message.objects.filter(
+            sender=patient.user,
+            recipient=request.user,
+            is_read=False
+        ).count()
+
+        # Get next appointment
+        next_appointment = Appointment.objects.filter(
+            patient=patient,
+            appointment_date__gte=timezone.now().date()
+        ).order_by('appointment_date', 'appointment_time').first()
+
+        messages_overview[patient] = {
+            'latest_message': latest_message,
+            'next_appointment': next_appointment,
+            'message_time': latest_message.timestamp if latest_message else None,
+            'unread_count': unread_count
+        }
+
+    # Sort patients by latest message time
+    min_datetime = timezone.make_aware(datetime.min)
+    sorted_patients = sorted(
+        patients,
+        key=lambda p: messages_overview[p]['message_time'] if messages_overview[p]['message_time'] else min_datetime,
+        reverse=True
+    )
+
+    selected_patient_username = request.GET.get("selected_patient")
+    selected_patient = None
+    messages_list = None
+
+    if selected_patient_username:
+        selected_patient = get_object_or_404(User, username=selected_patient_username)
+        
+        # Handle AJAX request for new messages
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            after_timestamp = request.GET.get('after_timestamp')
+            if after_timestamp:
+                try:
+                    after_timestamp = parse_datetime(after_timestamp)
+                    if timezone.is_naive(after_timestamp):
+                        after_timestamp = timezone.make_aware(after_timestamp)
+                    
+                    new_messages = Message.objects.filter(
+                        Q(sender=request.user, recipient=selected_patient) | 
+                        Q(sender=selected_patient, recipient=request.user),
+                        timestamp__gt=after_timestamp
+                    ).order_by('timestamp')
+                    
+                    messages_data = [{
+                        'id': str(message.id),
+                        'content': message.content.replace('PATIENT: ', '').replace('URGENT: ', '').replace('ESCALATION: ', ''),
+                        'is_sent': message.sender == request.user,
+                        'sender_name': message.sender.username,
+                        'timestamp': message.timestamp.strftime('%b %d, %Y %H:%M')
+                    } for message in new_messages]
+                    
+                    return JsonResponse({'messages': messages_data})
+                except (ValueError, TypeError):
+                    return JsonResponse({'messages': []})
+        
+        # Get messages in chronological order (oldest first)
+        messages_list = Message.objects.filter(
+            Q(sender=request.user, recipient=selected_patient) | 
+            Q(sender=selected_patient, recipient=request.user)
+        ).order_by('timestamp')
+        
+        # Mark messages as read when doctor views them
+        messages_list.filter(recipient=request.user).update(is_read=True)
+    
+        if request.method == "POST":
+            message_content = request.POST.get("message")
+            if message_content:
+                new_message = Message.objects.create(
+                    sender=request.user,
+                    recipient=selected_patient,
+                    content=message_content,
+                    is_read=False
+                )
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': {
+                            'id': str(new_message.id),
+                            'content': new_message.content,
+                            'is_sent': True,
+                            'sender_name': request.user.username,
+                            'timestamp': new_message.timestamp.strftime('%b %d, %Y %H:%M')
+                        }
+                    })
+                return redirect(reverse("messages") + f"?selected_patient={selected_patient_username}")
+
+    return render(request, 'messages.html', {
+        "patients": sorted_patients,
+        "messages_overview": messages_overview,
+        "selected_patient": selected_patient,
+        "messages_list": messages_list,
+        "role": "doctor"
+    })
+
+@login_required
+def check_new_messages(request):
+    """
+    Check for new messages since the last check time.
+    Also returns unread counts per patient if requested.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    try:
+        # Get the last check time from the request
+        last_check_time = request.GET.get('last_check_time')
+        if last_check_time:
+            try:
+                last_check_time = parse_datetime(last_check_time)
+                if timezone.is_naive(last_check_time):
+                    last_check_time = timezone.make_aware(last_check_time)
+            except (ValueError, TypeError):
+                last_check_time = None
+
+        # If requesting unread counts
+        if request.GET.get('get_unread_counts'):
+            unread_counts = {}
+            patients = Patient.objects.all()
+            for patient in patients:
+                count = Message.objects.filter(
+                    sender=patient.user,
+                    recipient=request.user,
+                    is_read=False
+                ).count()
+                if count > 0:
+                    unread_counts[patient.user.username] = count
+            
+            return JsonResponse({
+                'unread_counts': unread_counts,
+                'current_time': timezone.now().isoformat()
+            })
+        
+        # Regular new message check - check for ANY unread messages
+        has_new_messages = Message.objects.filter(
+            recipient=request.user,
+            is_read=False
+        ).exists()
+        
+        return JsonResponse({
+            'has_new_messages': has_new_messages,
+            'current_time': timezone.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in check_new_messages: {str(e)}")
+        return JsonResponse({
+            'error': 'Server error',
+            'details': str(e)
+        }, status=500)

@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HealthSync</title>
+  <link rel="icon" type="image/x-icon" href="{% static 'core/favicon.ico' %}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  {% load static %}
   <link rel="stylesheet" type="text/css" href="{% static 'core/core_style.css' %}">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -17,10 +18,12 @@
       --text-color: #1f2937;
       --light-bg: #f3f4f6;
       --border-color: #e5e7eb;
+      --sidebar-width: 250px;
+      --header-height: 60px;
     }
 
     body { 
-      padding-top: 56px;
+      padding-top: var(--header-height);
       color: var(--text-color);
       background-color: var(--light-bg);
       min-height: 100vh;
@@ -29,8 +32,9 @@
     .navbar {
       background-color: var(--primary-color) !important;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      height: 56px;
+      height: var(--header-height);
       z-index: 1030;
+      padding: 0 1.5rem;
     }
 
     .navbar-brand {
@@ -54,54 +58,164 @@
       color: white !important;
     }
 
+    .main-content {
+      margin-left: var(--sidebar-width);
+      padding: 1.25rem;
+      min-height: calc(100vh - var(--header-height));
+      background-color: var(--light-bg);
+    }
+
     #side-panel {
       position: fixed;
       left: 0;
-      top: 56px;
+      top: var(--header-height);
       bottom: 0;
-      width: 250px;
+      width: var(--sidebar-width);
       background-color: white;
       box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-      padding: 1.5rem;
+      padding: 1rem;
       overflow-y: auto;
       z-index: 1020;
     }
 
-    .main-content {
-      margin-left: 250px;
-      padding: 1.5rem;
-      min-height: calc(100vh - 56px);
+    .card {
+      border: none;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      background-color: white;
+      margin-bottom: 1rem;
+    }
+
+    .card-header {
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+    }
+
+    .card-body {
+      padding: 1.25rem;
     }
 
     .list-group-item {
-      border: none;
+      display: flex;
+      align-items: center;
       padding: 0.75rem 1rem;
-      margin-bottom: 0.5rem;
-      border-radius: 0.5rem !important;
+      margin-bottom: 0.375rem;
+      border: none;
+      border-radius: 0.5rem;
       transition: all 0.2s ease;
+      color: var(--text-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .list-group-item i {
+      margin-right: 1rem;
+      width: 1.25rem;
+      text-align: center;
+      color: var(--primary-color);
+      font-size: 1.1rem;
+    }
+
+    .notification-dot {
+      display: none;
+      width: 12px;
+      height: 12px;
+      background-color: #ff4444;
+      border-radius: 50%;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transform: none;
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 6px rgba(255, 68, 68, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+      }
+    }
+
+    .unread-count {
+      background-color: #ff4444;
+      color: white;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+    }
+
+    .message-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color 0.2s ease;
+    }
+
+    .message-list-item:hover {
+      background-color: var(--light-bg);
+    }
+
+    .message-list-item.unread {
+      background-color: #f0f7ff;
+    }
+
+    .message-list-item .patient-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .message-list-item .patient-name {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .list-group-item.has-notification {
+      position: relative;
+    }
+
+    .list-group-item.has-notification .notification-dot {
+      display: block;
     }
 
     .list-group-item:hover {
       background-color: var(--light-bg);
+      transform: translateX(5px);
+      color: var(--primary-color);
     }
 
-    .list-group-item a {
-      color: var(--text-color);
-      text-decoration: none;
-      display: block;
-      width: 100%;
+    .list-group-item.active {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      color: white;
+    }
+
+    .list-group-item.active i {
+      color: white;
     }
 
     .alert {
       border-radius: 0.5rem;
       border: none;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .card {
-      border: none;
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
 
     .btn {
@@ -121,10 +235,14 @@
     }
 
     .container-fluid {
-      padding: 1rem;
+      padding: 0 1rem;
     }
 
     @media (max-width: 768px) {
+      :root {
+        --sidebar-width: 240px;
+      }
+
       #side-panel {
         transform: translateX(-100%);
         transition: transform 0.3s ease;
@@ -136,15 +254,81 @@
 
       .main-content {
         margin-left: 0;
+        padding: 1rem;
       }
 
       .navbar-toggler {
         display: block;
       }
     }
+
+    /* Side panel styles */
+    #side-panel {
+      width: 250px;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #f8f9fa;
+      padding-top: 56px;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+
+    .side-panel-content {
+      padding: 15px;
+    }
+
+    .list-group-item {
+      border: none;
+      padding: 12px 20px;
+      margin-bottom: 5px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      position: relative;  /* Added for notification dot positioning */
+    }
+
+    .list-group-item i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .list-group-item:hover {
+      background-color: #e9ecef;
+    }
+
+    .list-group-item.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+    /* Main content adjustment */
+    .main-content {
+      margin-left: 250px;
+      padding: 20px;
+      padding-top: 76px;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      #side-panel {
+        transform: translateX(-100%);
+      }
+
+      #side-panel.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+    }
   </style>
 </head>
-<body>
+<body class="admin-body" data-role="{{ role }}">
+  {% include 'notifications.html' %}
+  
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
     <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'home' %}">HealthSync</a>
@@ -173,14 +357,29 @@
       <div class="side-panel-content">
         <div class="list-group">
           {% if role == "doctor" %}
-            <a href="{% url 'patients_list' %}" class="list-group-item">Patients</a>
-            <a href="{% url 'messages' %}" class="list-group-item">Messages</a>
-            <a href="{% url 'doctor_dashboard' %}" class="list-group-item">Dashboard</a>
-            <a href="{% url 'doctor_consultation_room' %}" class="list-group-item">Virtual Consultation</a>
+            <a href="{% url 'patients_list' %}" class="list-group-item">
+              <i class="fas fa-users"></i> Patients
+            </a>
+            <a href="{% url 'messages' %}" class="list-group-item" id="messages-tab">
+              <i class="fas fa-comments"></i> Messages
+              <span class="notification-dot"></span>
+            </a>
+            <a href="{% url 'doctor_dashboard' %}" class="list-group-item">
+              <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'doctor_consultation_room' %}" class="list-group-item">
+              <i class="fas fa-video"></i> Virtual Consultation
+            </a>
           {% elif role == "patient" %}
-            <a href="{% url 'view_reminders' %}" class="list-group-item">Health Hub</a>
-            <a href="{% url 'patient_dashboard' %}" class="list-group-item">My Health Data</a>
-            <a href="{% url 'available_doctors' %}" class="list-group-item">Virtual Consultation</a>
+            <a href="{% url 'view_reminders' %}" class="list-group-item">
+              <i class="fas fa-bell"></i> Health Hub
+            </a>
+            <a href="{% url 'patient_dashboard' %}" class="list-group-item">
+              <i class="fas fa-heartbeat"></i> My Health Data
+            </a>
+            <a href="{% url 'available_doctors' %}" class="list-group-item">
+              <i class="fas fa-user-md"></i> Virtual Consultation
+            </a>
           {% endif %}
         </div>
       </div>
@@ -212,6 +411,9 @@
   {% endif %}
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% if role == "doctor" and request.resolver_match.url_name != 'messages' %}
+    <script src="{% static 'core/js/message_checker.js' %}"></script>
+  {% endif %}
   <script>
     // Handle mobile navigation
     document.querySelector('.navbar-toggler').addEventListener('click', function() {

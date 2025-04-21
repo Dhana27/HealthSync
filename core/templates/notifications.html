@@ -1,0 +1,159 @@
+{% load static %}
+
+<!-- Notification Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1500;">
+    <!-- Toasts will be dynamically added here -->
+</div>
+
+<!-- Notification Template -->
+<template id="toast-template">
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="35000">
+        <div class="toast-header">
+            <i class="fas fa-bell me-2"></i>
+            <strong class="me-auto notification-title">Notification</strong>
+            <small class="text-muted notification-time">just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body notification-message">
+            <!-- Message content will be inserted here -->
+        </div>
+    </div>
+</template>
+
+<script>
+// Initialize Bootstrap components when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all toasts
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function(toastEl) {
+        return new bootstrap.Toast(toastEl);
+    });
+});
+
+function showNotification(title, message) {
+    try {
+        // Clone the template
+        const template = document.querySelector('#toast-template');
+        if (!template) {
+            console.error('Toast template not found');
+            return;
+        }
+        
+        const toast = template.content.cloneNode(true).querySelector('.toast');
+        if (!toast) {
+            console.error('Toast element not found in template');
+            return;
+        }
+        
+        // Set content
+        const titleEl = toast.querySelector('.notification-title');
+        const messageEl = toast.querySelector('.notification-message');
+        
+        if (titleEl && messageEl) {
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            // Add to container
+            const container = document.querySelector('.toast-container');
+            if (container) {
+                container.appendChild(toast);
+                
+                // Initialize and show the toast
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+                
+                // Play notification sound
+                playNotificationSound();
+                
+                // Remove toast after it's hidden
+                toast.addEventListener('hidden.bs.toast', () => {
+                    toast.remove();
+                });
+            } else {
+                console.error('Toast container not found');
+            }
+        } else {
+            console.error('Toast title or message elements not found');
+        }
+    } catch (error) {
+        console.error('Error showing notification:', error);
+    }
+}
+
+// Function to play notification sound
+function playNotificationSound() {
+    try {
+        const audio = new Audio('/static/core/notification.mp3');
+        audio.play().catch(error => {
+            console.warn('Could not play notification sound:', error);
+        });
+    } catch (error) {
+        console.warn('Error playing notification sound:', error);
+    }
+}
+
+// Function to check for new messages
+function checkNewMessages() {
+    fetch('/notifications/check-new-messages/', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            console.warn('Server reported error:', data.error);
+            return;
+        }
+        
+        if (data.new_messages && data.new_messages.length > 0) {
+            data.new_messages.forEach(msg => {
+                const isChatWidgetClosed = document.querySelector('#chatWidget')?.classList.contains('collapsed') ?? true;
+                const isPatient = document.body.getAttribute('data-role') === 'patient';
+                
+                // For patient, only show notification if chat widget is closed
+                if ((isPatient && isChatWidgetClosed) || !isPatient) {
+                    showNotification(
+                        'New Message',
+                        `You received a message from ${msg.sender}`
+                    );
+                }
+            });
+        }
+        
+        // Check for consultation requests (for doctors only)
+        if (data.consultation_requests && data.consultation_requests.length > 0) {
+            data.consultation_requests.forEach(req => {
+                showNotification(
+                    'Virtual Consultation Request',
+                    `New consultation request from ${req.patient_name}`
+                );
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error checking messages:', error);
+    });
+}
+
+// Start checking for new messages when the document is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Initial check after a short delay to ensure everything is initialized
+    setTimeout(checkNewMessages, 2000);
+    
+    // Set up periodic checks
+    const checkInterval = setInterval(checkNewMessages, 30000);
+    
+    // Clean up interval when page is unloaded
+    window.addEventListener('unload', () => {
+        clearInterval(checkInterval);
+    });
+});
+</script> 
