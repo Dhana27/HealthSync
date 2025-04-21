@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container mt-4">
     <h2 class="mb-4">Health Hub</h2>
 
@@ -100,7 +101,7 @@
                                 {% endif %}
                             </td>
                             <td id="action-{{ med.id }}">
-                                <button onclick="markMedicationTaken({{ med.id }})" 
+                                <button data-medication-id="{{ med.id }}" 
                                         class="btn btn-sm {% if med.reminder_status == 'taken' or med.reminder_status == 'ended' %}btn-secondary{% else %}btn-success{% endif %} mark-taken-btn"
                                         {% if med.reminder_status == 'taken' or med.reminder_status == 'ended' %}disabled{% endif %}>
                                     Mark as Taken
@@ -152,6 +153,45 @@
 
 {% block extra_js %}
 <script>
+console.log('Script block loaded');
+
+// Function to mark medication as taken
+function markMedicationTaken(medicationId) {
+    console.log('markMedicationTaken called with ID:', medicationId);
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const actionBtn = document.querySelector(`#action-${medicationId} button`);
+    const originalText = actionBtn.innerHTML;
+    
+    actionBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+    actionBtn.disabled = true;
+
+    fetch(`/notifications/medication/${medicationId}/mark-taken/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response from server:', data);
+        if (data.status === 'success') {
+            updateMedicationStatus(medicationId);
+            showToast('Success', 'Medication marked as taken!', 'success');
+        } else {
+            actionBtn.innerHTML = originalText;
+            actionBtn.disabled = false;
+            showToast('Error', 'Failed to update status. Please try again.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        actionBtn.innerHTML = originalText;
+        actionBtn.disabled = false;
+        showToast('Error', 'Failed to update status. Please try again.', 'error');
+    });
+}
+
 // Function to check if a medication should be active based on date and time
 function isMedicationActive(medDate, medTime, endDate) {
     const now = new Date();
@@ -172,69 +212,74 @@ function isMedicationEnded(endDate) {
 
 // Function to update medication status
 function updateMedicationStatus(medicationId) {
-    fetch(`/notifications/check_medication_status/${medicationId}/`, {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/notifications/medication/${medicationId}/check-status/`, {
         method: 'GET',
         headers: {
+            'X-CSRFToken': csrftoken,
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
     .then(response => response.json())
     .then(data => {
-        const statusCell = document.querySelector(`#status-${medicationId}`);
-        const actionButton = document.querySelector(`#action-${medicationId} button`);
-        
-        // Update status badge
-        let badgeClass = '';
-        let badgeText = '';
-        
-        switch(data.status) {
-            case 'taken':
-                badgeClass = 'bg-success';
-                badgeText = 'Taken';
-                actionButton.disabled = true;
-                actionButton.classList.remove('btn-success');
-                actionButton.classList.add('btn-secondary');
-                break;
-            case 'overdue':
-                badgeClass = 'bg-danger';
-                badgeText = 'Overdue';
-                actionButton.disabled = false;
-                actionButton.classList.remove('btn-secondary');
-                actionButton.classList.add('btn-success');
-                break;
-            case 'missed':
-                badgeClass = 'bg-warning';
-                badgeText = 'Missed';
-                actionButton.disabled = false;
-                actionButton.classList.remove('btn-secondary');
-                actionButton.classList.add('btn-success');
-                break;
-            case 'sent':
-                badgeClass = 'bg-info';
-                badgeText = 'Reminder Sent';
-                actionButton.disabled = false;
-                actionButton.classList.remove('btn-secondary');
-                actionButton.classList.add('btn-success');
-                break;
-            case 'ended':
-                badgeClass = 'bg-secondary';
-                badgeText = 'Ended';
-                actionButton.disabled = true;
-                actionButton.classList.remove('btn-success');
-                actionButton.classList.add('btn-secondary');
-                break;
-            default:
-                badgeClass = 'bg-secondary';
-                badgeText = 'Pending';
-                actionButton.disabled = false;
-                actionButton.classList.remove('btn-secondary');
-                actionButton.classList.add('btn-success');
+        console.log('Status update response:', data);
+        if (data.status === 'success' || data.status === 'taken') {
+            const statusCell = document.querySelector(`#status-${medicationId}`);
+            const actionBtn = document.querySelector(`#action-${medicationId} button`);
+            
+            if (!statusCell || !actionBtn) {
+                console.error('Could not find status cell or action button for medication:', medicationId);
+                return;
+            }
+            
+            // Update status badge
+            let statusBadge = '';
+            const reminderStatus = data.reminder_status || data.status;
+            
+            switch(reminderStatus) {
+                case 'taken':
+                    statusBadge = '<span class="badge bg-success">Taken</span>';
+                    actionBtn.classList.remove('btn-success');
+                    actionBtn.classList.add('btn-secondary');
+                    actionBtn.disabled = true;
+                    break;
+                case 'overdue':
+                    statusBadge = '<span class="badge bg-danger">Overdue</span>';
+                    actionBtn.classList.remove('btn-secondary');
+                    actionBtn.classList.add('btn-success');
+                    actionBtn.disabled = false;
+                    break;
+                case 'missed':
+                    statusBadge = '<span class="badge bg-warning">Missed</span>';
+                    actionBtn.classList.remove('btn-secondary');
+                    actionBtn.classList.add('btn-success');
+                    actionBtn.disabled = false;
+                    break;
+                case 'sent':
+                    statusBadge = '<span class="badge bg-info">Reminder Sent</span>';
+                    actionBtn.classList.remove('btn-secondary');
+                    actionBtn.classList.add('btn-success');
+                    actionBtn.disabled = false;
+                    break;
+                case 'ended':
+                    statusBadge = '<span class="badge bg-secondary">Ended</span>';
+                    actionBtn.classList.remove('btn-success');
+                    actionBtn.classList.add('btn-secondary');
+                    actionBtn.disabled = true;
+                    break;
+                default:
+                    statusBadge = '<span class="badge bg-secondary">Pending</span>';
+                    actionBtn.classList.remove('btn-secondary');
+                    actionBtn.classList.add('btn-success');
+                    actionBtn.disabled = false;
+            }
+            
+            statusCell.innerHTML = statusBadge;
         }
-        
-        statusCell.innerHTML = `<span class="badge ${badgeClass}">${badgeText}</span>`;
     })
     .catch(error => {
-        console.error('Error checking medication status:', error);
+        console.error('Error updating status:', error);
     });
 }
 
@@ -263,74 +308,58 @@ function checkAllMedications() {
     });
 }
 
-// Mark medication as taken function
-function markMedicationTaken(medicationId) {
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const actionBtn = document.querySelector(`#action-${medicationId} button`);
-    const originalText = actionBtn.innerHTML;
-    
-    actionBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
-    actionBtn.disabled = true;
-
-    fetch(`/notifications/mark_medication_taken/${medicationId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            updateMedicationStatus(medicationId);
-            showToast('Success', 'Medication marked as taken!', 'success');
-        } else {
-            actionBtn.innerHTML = originalText;
-            actionBtn.disabled = false;
-            showToast('Error', 'Failed to update status. Please try again.', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        actionBtn.innerHTML = originalText;
-        actionBtn.disabled = false;
-        showToast('Error', 'Failed to update status. Please try again.', 'error');
-    });
-}
-
-// Show toast function (unchanged)
+// Show toast function
 function showToast(title, message, type) {
-    // You can implement this using your preferred toast library
-    // For example, using Bootstrap's toast:
-    const toastHtml = `
-        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <strong>${title}</strong>: ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        </div>
-    `;
-    
-    const toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) {
+    const toastContainer = document.getElementById('toast-container') || (() => {
         const container = document.createElement('div');
         container.id = 'toast-container';
         container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
         document.body.appendChild(container);
-    }
-    
+        return container;
+    })();
+
     const toastElement = document.createElement('div');
-    toastElement.innerHTML = toastHtml;
-    document.getElementById('toast-container').appendChild(toastElement.firstChild);
+    toastElement.className = `toast align-items-center text-white bg-${type} border-0`;
+    toastElement.setAttribute('role', 'alert');
+    toastElement.setAttribute('aria-live', 'assertive');
+    toastElement.setAttribute('aria-atomic', 'true');
     
-    const toast = new bootstrap.Toast(document.getElementById('toast-container').lastChild);
+    toastElement.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <strong>${title}</strong>: ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toastElement);
+    const toast = new bootstrap.Toast(toastElement);
     toast.show();
+    
+    // Remove toast after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
 }
 
-// Initialize periodic checks
+// Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+    
+    // Bind click events to all mark-taken buttons
+    const buttons = document.querySelectorAll('.mark-taken-btn');
+    console.log('Found buttons:', buttons.length);
+    
+    buttons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const medicationId = this.getAttribute('data-medication-id');
+            console.log('Button clicked, medication ID:', medicationId);
+            markMedicationTaken(medicationId);
+        });
+    });
+
     // Check immediately on page load
     checkAllMedications();
     

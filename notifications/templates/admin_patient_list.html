@@ -77,8 +77,8 @@
                         <td>{{ data.patient.user.get_full_name }}</td>
                         <td>{{ data.created_at|date:"M d, Y" }}</td>
                         <td>
-                            {% if data.last_appointment %}
-                                {{ data.last_appointment|date:"M d, Y" }}
+                            {% if data.last_appointment_date %}
+                                {{ data.last_appointment_date|date:"M d, Y" }} at {{ data.last_appointment_time|time:"H:i" }}
                             {% else %}
                                 No records
                             {% endif %}

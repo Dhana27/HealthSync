@@ -227,9 +227,21 @@ def request_consultation(request, doctor_id):
     user = doctor_obj.user  # get linked user
     if request.method == 'POST':
         consult = ConsultRequest.objects.create(patient=request.user, doctor=user)
+        
+        # If this is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'redirect_url': reverse('my_consult_status', args=[consult.id])
+            })
+            
+        # For non-AJAX requests
         messages.success(request, f"You've been added to the queue for {doctor_obj}.")
         return redirect('my_consult_status', consult_id=consult.id)
     
+    # Handle GET requests
+    return redirect('available_doctors')
+
 @login_required
 def check_consult_status(request):
     print(f"[CHECK STATUS] Request by: {request.user}")

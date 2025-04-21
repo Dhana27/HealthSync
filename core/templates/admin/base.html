@@ -29,7 +29,12 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{% url 'admin:password_change' %}">Change password</a></li>
-                        <li><a class="dropdown-item" href="{% url 'admin:logout' %}">Logout</a></li>
+                        <li>
+                            <form method="post" action="{% url 'admin:logout' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">Logout</button>
+                            </form>
+                        </li>
                     </ul>
                 </div>
                 {% endif %}
@@ -43,11 +48,13 @@
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="sidebar-sticky">
                     <ul class="nav flex-column">
+                        {% comment %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'admin:index' %}">
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
                         </li>
+                        {% endcomment %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'admin:auth_user_changelist' %}">
                                 <i class="fas fa-users"></i> Users

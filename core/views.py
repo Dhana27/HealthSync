@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.db.models import Q
-from notifications.models import Doctor, Patient
+from notifications.models import Doctor, Patient, Appointment
 from .models import Message, FitbitVitals
 from .forms import ChatForm, PatientRegisterForm, PatientProfileForm, UserProfileForm, DoctorProfileForm
 from django.contrib.auth.forms import AuthenticationForm
@@ -585,44 +585,27 @@ def admin_dashboard_view(request):
     if not request.user.is_superuser:
         messages.error(request, "Access denied.")
         return redirect("home")
+    # Redirect directly to patient list
     return redirect('admin_patient_list')
 
 @login_required
 def refresh_chat(request):
-    """Returns the latest chat messages as JSON for AJAX refresh."""
-    messages_list = Message.objects.filter(
-        Q(sender=request.user) | Q(recipient=request.user)
-    ).order_by("timestamp")
-
-    messages_data = []
-    for msg in messages_list:
-        sender_label = msg.sender.username
-        role_label = "patient"  # Default role
-        content_text = msg.content
-
-        # Determine role and sender based on message content and sender/recipient
-        if msg.content.startswith("BOT:"):
-            sender_label = "Healthsync Virtual Assistant"
-            role_label = "bot"
-            content_text = msg.content.replace("BOT: ", "")
-        elif msg.content.startswith("PATIENT:"):
-            if msg.sender == request.user:
-                sender_label = "You"
-                role_label = "patient"
-            else:
-                sender_label = msg.sender.username
-                role_label = "patient"
-            content_text = msg.content.replace("PATIENT: ", "")
-        elif msg.sender.groups.filter(name="Doctor").exists():
-            sender_label = f"Dr. {msg.sender.username}"
-            role_label = "doctor"
-
-        messages_data.append({
-            "sender": sender_label,
-            "role": role_label,
-            "content": content_text,
-            "timestamp": msg.timestamp.strftime("%b %d, %Y %H:%M")
-        })
-
-    return JsonResponse({"messages": messages_data})
+    """Refresh chat messages."""
+    try:
+        user = request.user
+        messages = Message.objects.filter(
+            Q(sender=user) | Q(recipient=user)
+        ).order_by('timestamp')
+        
+        message_list = []
+        for msg in messages:
+            message_list.append({
+                'sender': msg.sender.username,
+                'content': msg.content,
+                'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        
+        return JsonResponse({'messages': message_list})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 

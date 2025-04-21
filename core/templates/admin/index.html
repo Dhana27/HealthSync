@@ -11,30 +11,15 @@
 {% block bodyclass %}{{ block.super }} dashboard{% endblock %}
 
 {% block content %}
-<div class="dashboard-welcome">
-    <h2>Welcome to Virtual Assistant Admin</h2>
-    <p>Manage your application's data, users, and settings from this centralized dashboard.</p>
-</div>
-
-<div class="app-list">
-    {% for app in app_list %}
-    <div class="app-card">
-        <h3>{{ app.name }}</h3>
-        <ul class="model-list">
-            {% for model in app.models %}
-            <li>
-                {% if model.admin_url %}
-                <a href="{{ model.admin_url }}">{{ model.name }}</a>
-                {% else %}
-                {{ model.name }}
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
+<div class="card">
+    <div class="card-body text-center">
+        <h3>Welcome to Virtual Assistant Admin</h3>
+        <p>You will be redirected to the patient records page.</p>
+        <script>
+            window.location.href = '/notifications/admin/patients/';
+        </script>
     </div>
-    {% endfor %}
 </div>
-
 {% endblock %}
 
 {% block sidebar %}{% endblock %} 

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Patient List -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Patients</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for patient in patients %}
+                            {% with overview=messages_overview|get_item:patient %}
+                            <a href="{% url 'messages' %}?selected_patient={{ patient.user.username }}" 
+                               class="list-group-item list-group-item-action {% if selected_patient.username == patient.user.username %}active{% endif %}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ patient.user.get_full_name }}</h6>
+                                    {% if overview.latest_message %}
+                                        <small>{{ overview.latest_message.timestamp|timesince }} ago</small>
+                                    {% endif %}
+                                </div>
+                                {% if overview.latest_message %}
+                                    <p class="mb-1 text-truncate">{{ overview.latest_message.content }}</p>
+                                {% else %}
+                                    <p class="mb-1 text-muted">No messages yet</p>
+                                {% endif %}
+                                {% if overview.next_appointment %}
+                                    <small class="text-muted">
+                                        Next appointment: {{ overview.next_appointment.appointment_date|date:"M d, Y" }} at {{ overview.next_appointment.appointment_time|time:"H:i" }}
+                                    </small>
+                                {% endif %}
+                            </a>
+                            {% endwith %}
+                        {% empty %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">No patients found</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="col-md-8">
+            {% if selected_patient %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Chat with {{ selected_patient.get_full_name }}</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="chat-messages flex-grow-1" id="chat-messages" style="height: 400px; overflow-y: auto;">
+                            <div id="message-container" class="d-flex flex-column">
+                                {% for message in messages_list %}
+                                    <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %} mb-3">
+                                        <div class="message-content p-3 rounded">
+                                            {% if message.sender != request.user %}
+                                                <div class="sender-name mb-1">{{ message.sender.get_full_name }}</div>
+                                            {% endif %}
+                                            {{ message.content }}
+                                            <small class="d-block text-muted mt-1">
+                                                {{ message.timestamp|date:"M d, Y H:i" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-center text-muted">No messages yet</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <form method="post" class="mt-3" id="message-form">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <textarea name="message" class="form-control" rows="2" placeholder="Type your message..." required></textarea>
+                                <button type="submit" class="btn btn-primary">Send</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center">
+                        <p class="mb-0">Select a patient to start chatting</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .message {
+        max-width: 75%;
+    }
+    .message.sent {
+        margin-left: auto;
+    }
+    .message.sent .message-content {
+        background-color: #007bff;
+        color: white;
+    }
+    .message.received .message-content {
+        background-color: #f8f9fa;
+    }
+    .message.received .sender-name {
+        font-weight: 500;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .message.sent .message-content small,
+    .message.sent .message-content .sender-name {
+        color: rgba(255,255,255,0.8) !important;
+    }
+    .chat-messages {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,.2) transparent;
+    }
+    #message-container {
+        min-height: 100%;
+        justify-content: flex-end;
+    }
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        background-color: #28a745;
+        color: white;
+        border-radius: 4px;
+        z-index: 1000;
+        display: none;
+    }
+</style>
+
+<div id="notification" class="notification"></div>
+
+<!-- Load message checker script -->
+<script src="{% static 'js/message_checker.js' %}"></script>
+{% endblock %} 

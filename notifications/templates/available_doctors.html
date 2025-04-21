@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
+{% csrf_token %}
 <h2>Available Doctors</h2>
 {% for doc in doctors %}
   <div class="card mb-2">
     <div class="card-body">
       <h5>{{ doc.user.get_full_name }}</h5>
-      <form method="post" action="{% url 'request_consultation' doc.id %}">
+      <form action="{% url 'request_consultation' doc.id %}" method="POST">
         {% csrf_token %}
-        <button class="btn btn-primary">Request Consultation</button>
+        <button type="submit" class="btn btn-primary">Request Consultation</button>
       </form>
     </div>
   </div>
@@ -37,4 +38,7 @@
 {% empty %}
   <p>You have no past consultations.</p>
 {% endfor %}
+{% endblock %}
+
+{% block extra_js %}
 {% endblock %}
