@@ -998,6 +998,9 @@ function refreshMessages(shouldScroll = false) {
 
             // Only update if we have new messages or the content has changed
             if (response.messages.length !== lastMessageCount || hasNewMessages(response.messages)) {
+                // Store the current scroll position
+                const scrollPosition = messagesDiv.scrollTop;
+                
                 messagesDiv.innerHTML = '';
                 lastSystemMessage = null;
                 
@@ -1011,8 +1014,8 @@ function refreshMessages(shouldScroll = false) {
                     );
                 });
 
-                // Restore the analysis message if it exists
-                if (analysisMessage) {
+                // Restore the analysis message if it exists and we're not processing feedback
+                if (analysisMessage && !isProcessingFeedback) {
                     messagesDiv.appendChild(analysisMessage);
                 }
 
@@ -1025,6 +1028,9 @@ function refreshMessages(shouldScroll = false) {
                 
                 if (shouldScroll) {
                     scrollToBottom();
+                } else {
+                    // Restore the previous scroll position
+                    messagesDiv.scrollTop = scrollPosition;
                 }
 
                 // Store current messages for comparison
@@ -1161,50 +1167,27 @@ document.getElementById('feedbackFormElement').addEventListener('submit', functi
                 let message = '';
                 let needsConsultation = false;
                 
-                // Analyze symptoms and pain level
-                if (painLevel >= 7 || 
-                    symptoms.toLowerCase().includes('chest pain') || 
-                    symptoms.toLowerCase().includes('difficulty breathing') ||
-                    symptoms.toLowerCase().includes('severe')) {
-                    message = `Based on your reported symptoms and pain level (${painLevel}/10), I strongly recommend immediate medical consultation.
+                // Use the actual analysis from the server response
+                if (data.severity_level === 'severe' || data.urgency === 'high' || 
+                    data.severity_level === 'moderate' || data.urgency === 'medium') {
+                    message = `Based on your symptoms and pain level (${painLevel}/10), I recommend medical consultation.
 
-Your symptoms suggest a condition that requires professional medical evaluation. Here's why:
-- High pain level or concerning symptoms reported
-- Your description indicates potential serious conditions
-- Early medical intervention is important in such cases
+${data.reasoning}
 
 Would you like to schedule a virtual consultation now?`;
-                    needsConsultation = true;
-                } else if (painLevel >= 4 || 
-                         symptoms.toLowerCase().includes('fever') || 
-                         symptoms.toLowerCase().includes('persistent')) {
-                    message = `Based on your symptoms and pain level (${painLevel}/10), here are my recommendations:
-
-1. Your symptoms suggest a moderate condition that should be monitored
-2. While not immediately severe, medical consultation would be beneficial
-3. Monitor for any worsening of symptoms
-
-Continue to:
-- Rest and stay hydrated
-- Take over-the-counter medications as appropriate
-- Monitor your temperature and symptoms
-- Seek medical attention if symptoms worsen
-
-Would you like to speak with a doctor about your symptoms?`;
                     needsConsultation = true;
                 } else {
                     message = `Based on your symptoms and pain level (${painLevel}/10), your condition appears to be mild.
 
+${data.reasoning}
+
 Recommendations:
-1. Rest and ensure adequate hydration
-2. Monitor your symptoms for any changes
-3. Practice good self-care and hygiene
-4. Consider over-the-counter remedies as appropriate
+${data.recommended_actions.map(action => `- ${action}`).join('\n')}
 
 If symptoms persist or worsen, don't hesitate to seek medical advice.`;
                 }
                 
-                // Store the analysis message
+                // Store the analysis message and show consultation options if needed
                 const messageDiv = displayMessage(message, 'bot');
                 lastAnalysisMessage = messageDiv;
                 
@@ -1279,7 +1262,11 @@ function handleConsultNow() {
     if (consultationMessage) {
         consultationMessage.remove();
     }
-    window.location.href = '{% url "available_doctors" %}';
+    
+    // Add a small delay to ensure the message is removed before redirect
+    setTimeout(() => {
+        window.location.href = '{% url "available_doctors" %}';
+    }, 100);
 }
 
 function handleConsultLater() {

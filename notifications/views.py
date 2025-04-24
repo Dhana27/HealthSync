@@ -589,21 +589,42 @@ def submit_feedback(request):
                 consultation_recommended=analysis_data['follow_up_needed']
             )
             
-            # Determine follow-up action based on severity and urgency
-            if analysis_data['severity_level'] == 'severe' or analysis_data['urgency'] == 'high':
-                messages.warning(request, f"Based on your symptoms, we recommend immediate consultation with a doctor. {analysis_data['reasoning']}")
-                return redirect('available_doctors')
-            elif analysis_data['severity_level'] == 'moderate' or analysis_data['urgency'] == 'medium':
-                messages.info(request, f"We recommend scheduling a consultation within 24 hours. {analysis_data['reasoning']}")
+            # If it's an AJAX request, return the analysis data
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                # Clean up the reasoning text
+                reasoning = analysis_data['reasoning']
+                reasoning = reasoning.replace('The patient', 'You').replace('the patient', 'you')
+                reasoning = reasoning.replace('You is', 'You are').replace('you is', 'you are')
+                reasoning = reasoning.replace("You's", "Your").replace("you's", "your")
+                reasoning = reasoning.replace("You reports", "You reported").replace("you reports", "you reported")
+                # Remove duplicate pain level information
+                reasoning = reasoning.replace(f'with a pain level of {pain_level}/10', '').replace(f'at a level of {pain_level}/10', '')
+                reasoning = reasoning.replace(f'The pain level of {pain_level}/10', '')
+                reasoning = reasoning.replace(f'pain level of {pain_level}/10', '')
+                reasoning = reasoning.replace(f'A also suggests', 'This also suggests')
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'severity_level': analysis_data['severity_level'],
+                    'urgency': analysis_data['urgency'],
+                    'reasoning': reasoning,
+                    'recommended_actions': analysis_data['recommended_actions'],
+                    'message': f"Based on your symptoms and pain level ({pain_level}/10), {reasoning}"
+                })
+            
+            # For non-AJAX requests, handle as before
+            if analysis_data['severity_level'] in ['severe', 'moderate'] or analysis_data['urgency'] in ['high', 'medium']:
+                messages.warning(request, f"Based on your symptoms, we recommend immediate consultation with a doctor. {analysis_data['reasoning'].replace('The patient', 'You').replace('the patient', 'you')}")
                 return redirect('available_doctors')
             else:
-                # For mild cases, show self-care tips
-                self_care_message = f"Thank you for your health update. {analysis_data['reasoning']}\n\nRecommended actions:\n" + "\n".join(f"- {action}" for action in analysis_data['recommended_actions'])
+                self_care_message = f"Thank you for your health update. {analysis_data['reasoning'].replace('The patient', 'You').replace('the patient', 'you')}\n\nRecommended actions:\n" + "\n".join(f"- {action}" for action in analysis_data['recommended_actions'])
                 messages.success(request, self_care_message)
                 return redirect('patient_dashboard')
                 
         except Exception as e:
             logger.error(f"Error in health analysis: {str(e)}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'Sorry, there was an error processing your health update. Please try again later.'}, status=500)
             messages.error(request, "Sorry, there was an error processing your health update. Please try again later.")
             return redirect('patient_dashboard')
             
