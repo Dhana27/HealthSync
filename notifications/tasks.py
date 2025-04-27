@@ -19,27 +19,42 @@ def send_sms_reminder(medication_id, message=None):
         patient_phone = medication.patient.phone_number
         caregiver_phone = medication.patient.caregiver_phone  # Optional
 
+        if not patient_phone and not caregiver_phone:
+            return "Error sending SMS: No phone numbers available"
+
         # Twilio API Setup
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
         if message is None:
             message = f"Reminder: Take your medication '{medication.medication_name}' ({medication.dosage}) - {medication.get_food_timing_display()}"
 
+        sms_sent = False
         # Send SMS to patient
         if patient_phone:
-            client.messages.create(
-                body=message,
-                from_=settings.TWILIO_PHONE_NUMBER,
-                to=patient_phone
-            )
+            try:
+                client.messages.create(
+                    body=message,
+                    from_=settings.TWILIO_PHONE_NUMBER,
+                    to=patient_phone
+                )
+                sms_sent = True
+            except Exception as e:
+                print(f"Error sending SMS to patient: {str(e)}")
 
         # Send SMS to caregiver (optional)
         if caregiver_phone:
-            client.messages.create(
-                body=message,
-                from_=settings.TWILIO_PHONE_NUMBER,
-                to=caregiver_phone
-            )
+            try:
+                client.messages.create(
+                    body=message,
+                    from_=settings.TWILIO_PHONE_NUMBER,
+                    to=caregiver_phone
+                )
+                sms_sent = True
+            except Exception as e:
+                print(f"Error sending SMS to caregiver: {str(e)}")
+
+        if not sms_sent:
+            return "Error sending SMS: Failed to send to any recipients"
 
         return f"SMS sent for Medication ID: {medication_id}"
 

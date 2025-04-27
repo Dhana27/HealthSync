@@ -21,7 +21,7 @@ class Doctor(models.Model):
 class Patient(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     assigned_doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, blank=True)
-    phone_number = models.CharField(max_length=15, blank=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
     caregiver_phone = models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField()
     role = models.CharField(max_length=10, choices=[('patient', 'Patient')], default='patient')
