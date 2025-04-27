@@ -45,6 +45,7 @@ class ConsultRequest(models.Model):
     room_url = models.URLField(null=True, blank=True)  # filled when accepted
     room_id = models.CharField(max_length=100, blank=True, null=True)
     prescription = models.OneToOneField('Prescription', null=True, blank=True, on_delete=models.SET_NULL)
+    viewed_by_doctor = models.BooleanField(default=False)
 
 
 # track medication prescribed and scheduled
@@ -209,6 +210,7 @@ class PatientFeedback(models.Model):
     consultation_accepted = models.BooleanField(null=True, blank=True)
     doctor_notes = models.TextField(blank=True, null=True)
     next_steps = models.TextField(blank=True, null=True)
+    viewed_by_doctor = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

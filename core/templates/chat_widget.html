@@ -1145,6 +1145,10 @@ document.getElementById('feedbackFormElement').addEventListener('submit', functi
     const formData = new FormData(this);
     isProcessingFeedback = true;  // Set the processing flag
     
+    console.log('Submitting feedback form...');
+    console.log('Pain level:', formData.get('pain_level'));
+    console.log('Feedback text:', formData.get('feedback'));
+    
     fetch(this.action, {
         method: 'POST',
         body: formData,
@@ -1155,73 +1159,42 @@ document.getElementById('feedbackFormElement').addEventListener('submit', functi
         credentials: 'same-origin'
     })
     .then(response => {
-        if (response.redirected) {
-            toggleFeedbackForm();
-            
-            displayMessage('Thank you for submitting your health update. Analyzing your symptoms...', 'system');
-            
-            setTimeout(() => {
-                const painLevel = parseInt(formData.get('pain_level'));
-                const symptoms = formData.get('feedback');
-                
-                let message = '';
-                let needsConsultation = false;
-                
-                // Use the actual analysis from the server response
-                if (data.severity_level === 'severe' || data.urgency === 'high' || 
-                    data.severity_level === 'moderate' || data.urgency === 'medium') {
-                    message = `Based on your symptoms and pain level (${painLevel}/10), I recommend medical consultation.
-
-${data.reasoning}
-
-Would you like to schedule a virtual consultation now?`;
-                    needsConsultation = true;
-                } else {
-                    message = `Based on your symptoms and pain level (${painLevel}/10), your condition appears to be mild.
-
-${data.reasoning}
-
-Recommendations:
-${data.recommended_actions.map(action => `- ${action}`).join('\n')}
-
-If symptoms persist or worsen, don't hesitate to seek medical advice.`;
-                }
-                
-                // Store the analysis message and show consultation options if needed
-                const messageDiv = displayMessage(message, 'bot');
-                lastAnalysisMessage = messageDiv;
-                
-                if (needsConsultation) {
-                    showConsultationOptions();
-                }
-            }, 1500);
-            
-            return;
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers));
+        
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('Error response body:', text);
+                throw new Error('Network response was not ok');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success response data:', data);
+        toggleFeedbackForm();
+        
+        if (data.error) {
+            throw new Error(data.error);
         }
         
-        return response.json().then(data => {
-            toggleFeedbackForm();
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            
-            displayMessage('Thank you for submitting your health update.', 'system');
-            
-            setTimeout(() => {
-                if (data.message) {
-                    const messageDiv = displayMessage(data.message, 'bot');
-                    lastAnalysisMessage = messageDiv;
-                    
-                    if (data.severity_level === 'severe' || data.urgency === 'high') {
-                        showConsultationOptions();
-                    }
+        displayMessage('Thank you for submitting your health update.', 'system');
+        
+        setTimeout(() => {
+            if (data.message) {
+                const messageDiv = displayMessage(data.message, 'bot');
+                lastAnalysisMessage = messageDiv;
+                
+                if (data.severity_level === 'severe' || data.urgency === 'high' || 
+                    data.severity_level === 'moderate' || data.urgency === 'medium') {
+                    showConsultationOptions();
                 }
-            }, 1500);
-        });
+            }
+        }, 1500);
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error details:', error);
+        console.error('Error stack:', error.stack);
         displayMessage('Error submitting health update. Please try again.', 'error');
         toggleFeedbackForm();
     })

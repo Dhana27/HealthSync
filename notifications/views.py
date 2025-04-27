@@ -538,33 +538,33 @@ def submit_feedback(request):
         return redirect('home')
         
     if request.method == 'POST':
-        feedback_text = request.POST.get('feedback')
-        pain_level = int(request.POST.get('pain_level'))
-        
-        # Initialize OpenAI client
-        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
-        
-        # Enhanced prompt for health analysis
-        system_prompt = """You are a healthcare assistant specialized in patient follow-up analysis. 
-        Given patient feedback and pain level, analyze the severity and urgency of their condition.
-        Consider the following in your analysis:
-        - Pain level (0-10 scale)
-        - Symptoms described
-        - Any concerning patterns or red flags
-        - Potential underlying conditions
-        - Required follow-up actions
-        
-        Return a JSON response with the following structure:
-        {
-            "sentiment_label": "positive" | "neutral" | "negative",
-            "severity_level": "mild" | "moderate" | "severe",
-            "urgency": "low" | "medium" | "high",
-            "follow_up_needed": true | false,
-            "reasoning": "<detailed explanation of your analysis>",
-            "recommended_actions": ["action1", "action2", ...]
-        }"""
-        
         try:
+            feedback_text = request.POST.get('feedback')
+            pain_level = int(request.POST.get('pain_level'))
+            
+            # Initialize OpenAI client
+            client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+            
+            # Enhanced prompt for health analysis
+            system_prompt = """You are a healthcare assistant specialized in patient follow-up analysis. 
+            Given patient feedback and pain level, analyze the severity and urgency of their condition.
+            Consider the following in your analysis:
+            - Pain level (0-10 scale)
+            - Symptoms described
+            - Any concerning patterns or red flags
+            - Potential underlying conditions
+            - Required follow-up actions
+            
+            Return a JSON response with the following structure:
+            {
+                "sentiment_label": "positive" | "neutral" | "negative",
+                "severity_level": "mild" | "moderate" | "severe",
+                "urgency": "low" | "medium" | "high",
+                "follow_up_needed": true | false,
+                "reasoning": "<detailed explanation of your analysis>",
+                "recommended_actions": ["action1", "action2", ...]
+            }"""
+            
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -622,9 +622,17 @@ def submit_feedback(request):
                 return redirect('patient_dashboard')
                 
         except Exception as e:
-            logger.error(f"Error in health analysis: {str(e)}")
+            import traceback
+            error_traceback = traceback.format_exc()
+            logger.error(f"Error in health analysis: {str(e)}\n{error_traceback}")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'error', 'message': 'Sorry, there was an error processing your health update. Please try again later.'}, status=500)
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Sorry, there was an error processing your health update. Please try again later.',
+                    'error_details': str(e),
+                    'error_type': type(e).__name__,
+                    'traceback': error_traceback
+                }, status=500)
             messages.error(request, "Sorry, there was an error processing your health update. Please try again later.")
             return redirect('patient_dashboard')
             
