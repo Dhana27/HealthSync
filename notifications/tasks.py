@@ -130,6 +130,54 @@ def check_vitals_and_alert():
         user = vitals.user
         patient = Patient.objects.get(user=user)
 
+        # --- Vital sign validation ---
+        # Define physiological plausible ranges
+        HR_MIN, HR_MAX = 30, 220
+        SPO2_MIN, SPO2_MAX = 70, 100
+        TEMP_MIN, TEMP_MAX = 93.0, 108.0
+
+        # Track if any value was out of range
+        rubbish_data = False
+        warning_msgs = []
+
+        # Heart Rate
+        if vitals.resting_heart_rate is not None:
+            if vitals.resting_heart_rate < HR_MIN:
+                warning_msgs.append(f"Heart rate {vitals.resting_heart_rate} too low, set to {HR_MIN}")
+                vitals.resting_heart_rate = HR_MIN
+                rubbish_data = True
+            elif vitals.resting_heart_rate > HR_MAX:
+                warning_msgs.append(f"Heart rate {vitals.resting_heart_rate} too high, set to {HR_MAX}")
+                vitals.resting_heart_rate = HR_MAX
+                rubbish_data = True
+
+        # SpO2
+        if vitals.spo2 is not None:
+            if vitals.spo2 < SPO2_MIN:
+                warning_msgs.append(f"SpO2 {vitals.spo2} too low, set to {SPO2_MIN}")
+                vitals.spo2 = SPO2_MIN
+                rubbish_data = True
+            elif vitals.spo2 > SPO2_MAX:
+                warning_msgs.append(f"SpO2 {vitals.spo2} too high, set to {SPO2_MAX}")
+                vitals.spo2 = SPO2_MAX
+                rubbish_data = True
+
+        # Body Temp
+        if vitals.body_temp is not None:
+            if vitals.body_temp < TEMP_MIN:
+                warning_msgs.append(f"Body temp {vitals.body_temp} too low, set to {TEMP_MIN}")
+                vitals.body_temp = TEMP_MIN
+                rubbish_data = True
+            elif vitals.body_temp > TEMP_MAX:
+                warning_msgs.append(f"Body temp {vitals.body_temp} too high, set to {TEMP_MAX}")
+                vitals.body_temp = TEMP_MAX
+                rubbish_data = True
+
+        if rubbish_data:
+            print(f"[INTERNAL WARNING] Rubbish data detected for user {user.username}: " + "; ".join(warning_msgs))
+            # Omit from alerting/analysis
+            continue
+
         # Alert logic
         hr_alert = vitals.resting_heart_rate and (vitals.resting_heart_rate < 50 or vitals.resting_heart_rate > 130)
         spo2_alert = vitals.spo2 and vitals.spo2 < 92
