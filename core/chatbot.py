@@ -5,7 +5,7 @@ import os
 # Set your API key from the environment variable.
 #openai.api_key = os.getenv("OPENAI_API_KEY")
 #print("Loaded API Key:", os.getenv("OPENAI_API_KEY"))
-client = OpenAI(api_key="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")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def ai_chatbot_response(user_message):
     """
